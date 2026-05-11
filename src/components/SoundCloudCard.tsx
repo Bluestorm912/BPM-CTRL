@@ -3,7 +3,8 @@ import type { SoundCloudTransmission } from "@/data/soundcloud";
 import { getSoundCloudEmbedUrl } from "@/data/soundcloud";
 
 const SoundCloudCard = ({ item, embed = true }: { item: SoundCloudTransmission; embed?: boolean }) => (
-  <article className="group glow-border-orange rounded-xl overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+  <article className="group liquid-glass rounded-3xl overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+    <div className="liquid-content">
     <div className="aspect-[4/3] overflow-hidden bg-transparent relative">
       <img src={item.coverImage} alt={`${item.title} cover`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
       <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
@@ -28,6 +29,7 @@ const SoundCloudCard = ({ item, embed = true }: { item: SoundCloudTransmission; 
           allow="autoplay"
         />
       )}
+    </div>
     </div>
   </article>
 );

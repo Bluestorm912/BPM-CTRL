@@ -14,6 +14,9 @@ import { useSiteLinks } from "@/hooks/useSiteLinks";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import EventSection from "@/components/EventSection";
 import CommunitySection from "@/components/CommunitySection";
+import FirstTimeGuide from "@/components/FirstTimeGuide";
+import InstallGuide from "@/components/InstallGuide";
+import LiquidActionBar from "@/components/LiquidActionBar";
 
 const Index = () => {
   const links = useSiteLinks();
@@ -86,6 +89,7 @@ const Index = () => {
         <MusicGallery />
         <EventSection />
         <CommunitySection />
+        <InstallGuide />
         <SupportCTA />
       </main>
 
@@ -103,6 +107,8 @@ const Index = () => {
           </nav>
         </div>
       </footer>
+      <FirstTimeGuide />
+      <LiquidActionBar />
       <BackToTop />
     </div>
   );

@@ -22,16 +22,16 @@ const Navbar = () => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-background/55 backdrop-blur-2xl border-b border-primary/15"
+      className="fixed top-0 left-0 right-0 z-50 px-3 pt-3"
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="liquid-glass mx-auto flex max-w-6xl items-center justify-between rounded-full px-4 py-2.5">
         <a href="/" className="flex items-center gap-2">
           <img src={logo} alt="BPM CTRL" className="h-8 w-auto" />
         </a>
 
-        <div className="hidden md:flex items-center gap-6 text-xs font-display tracking-[0.15em] text-muted-foreground uppercase">
+        <div className="liquid-content hidden md:flex items-center gap-6 text-xs font-display tracking-[0.15em] text-muted-foreground uppercase">
           {NAV_LINKS.map((link) => (
             <a key={link.href} href={link.href} className="hover:text-primary transition-colors">
               {link.label}
@@ -39,7 +39,7 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="liquid-content flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2">
             <a href={links.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors p-1.5" aria-label="Instagram">
               <Instagram className="w-4 h-4" />
@@ -52,7 +52,7 @@ const Navbar = () => {
             </a>
           </div>
 
-          <a href="/radio" className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-primary/30 bg-transparent text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
+          <a href="/radio" className="liquid-button flex items-center gap-1.5 rounded-full px-3 py-1.5 text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
             <Radio className="w-3 h-3" />
             Play
           </a>

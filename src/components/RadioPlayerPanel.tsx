@@ -11,9 +11,9 @@ const RadioPlayerPanel = ({ compact = false }: { compact?: boolean }) => {
   const canPlay = isLive ? !!radioState.streamUrl : !!currentTrack?.audio_url;
 
   return (
-    <div className={`glow-border-orange rounded-2xl relative overflow-hidden ${compact ? "p-4" : "p-5 md:p-7"}`}>
+    <div className={`liquid-glass rounded-3xl relative overflow-hidden ${compact ? "p-4" : "p-5 md:p-7"}`}>
       <div className="scanline absolute inset-0 opacity-10" />
-      <div className="relative z-10">
+      <div className="liquid-content">
         <div className="flex items-start justify-between gap-4 mb-6">
           <SignalStatusBadge label={isLive ? "Live Now" : radioState.mode === "off" ? "Standby" : "Now Playing"} active={radioState.mode !== "off"} />
           <Radio className="h-5 w-5 text-primary" />

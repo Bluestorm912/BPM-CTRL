@@ -38,16 +38,18 @@ const ControlRoomHero = () => (
             ["Archive", "sets and notes"],
             ["Shop", "member drops"],
           ].map(([label, value]) => (
-            <div key={label} className="glass-panel rounded-lg p-4">
+            <div key={label} className="liquid-glass rounded-2xl p-4">
+              <div className="liquid-content">
               <p className="font-display text-[10px] tracking-wider text-primary uppercase">{label}</p>
               <p className="mt-1 text-sm text-muted-foreground">{value}</p>
+              </div>
             </div>
           ))}
         </div>
       </div>
       <div className="space-y-4">
-        <div className="glass-panel rounded-2xl p-3">
-          <div className="aspect-square rounded-xl border border-primary/15 bg-transparent relative overflow-hidden flex items-center justify-center">
+        <div className="liquid-glass rounded-3xl p-3">
+          <div className="liquid-content aspect-square rounded-2xl border border-primary/15 bg-transparent relative overflow-hidden flex items-center justify-center">
             <div className="absolute h-3/4 w-3/4 rounded-full border border-primary/20 animate-signal-pulse" />
             <div className="absolute h-1/2 w-1/2 rounded-full border border-primary/20" />
             <Orbit className="h-24 w-24 text-primary animate-pulse-glow" />
@@ -55,13 +57,17 @@ const ControlRoomHero = () => (
         </div>
         <RadioPlayerPanel compact />
         <div className="grid grid-cols-2 gap-3">
-          <a href="/shop" className="glass-panel rounded-xl p-4 hover:border-primary/50 transition-colors">
+          <a href="/shop" className="liquid-glass rounded-2xl p-4 hover:border-primary/50 transition-colors">
+            <span className="liquid-content block">
             <ShoppingBag className="h-5 w-5 text-primary mb-3" />
             <span className="font-display text-xs tracking-wider uppercase">Shop</span>
+            </span>
           </a>
-          <a href="#transmissions" className="glass-panel rounded-xl p-4 hover:border-primary/50 transition-colors">
+          <a href="#transmissions" className="liquid-glass rounded-2xl p-4 hover:border-primary/50 transition-colors">
+            <span className="liquid-content block">
             <ArrowRight className="h-5 w-5 text-primary mb-3" />
             <span className="font-display text-xs tracking-wider uppercase">Browse</span>
+            </span>
           </a>
         </div>
       </div>
