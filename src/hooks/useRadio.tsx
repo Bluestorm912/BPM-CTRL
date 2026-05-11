@@ -92,10 +92,13 @@ export const useRadioPlayer = () => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const channelNameRef = useRef(
+    `radio-state-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Date.now()}`
+  );
 
   useEffect(() => {
     const channel = supabase
-      .channel("radio-state")
+      .channel(channelNameRef.current)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "site_content", filter: "section=eq.radio" },
