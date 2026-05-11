@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import { useTrackPageVisit } from "@/hooks/useAnalytics";
 import { RadioPlayerProvider } from "@/hooks/useRadio";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -39,16 +40,18 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <RadioPlayerProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-          <GlobalNowPlayingBar />
-        </BrowserRouter>
-      </TooltipProvider>
-    </RadioPlayerProvider>
+    <LanguageProvider>
+      <RadioPlayerProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+            <GlobalNowPlayingBar />
+          </BrowserRouter>
+        </TooltipProvider>
+      </RadioPlayerProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 

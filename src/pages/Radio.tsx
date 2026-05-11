@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useRadioPlayer } from "@/hooks/useRadio";
 import MusicGallery from "@/components/MusicGallery";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 const FEATURED_SHOWS = [
   {
@@ -32,9 +33,10 @@ const FEATURED_SHOWS = [
 
 const Radio = () => {
   const { radioState, currentTrack, tracks, isPlaying, togglePlay, playNext } = useRadioPlayer();
+  const { t } = useLanguage();
   usePageMeta(
-    "BPM Control Radio - Live Signal and SoundCloud Shows",
-    "Listen live, browse featured BPM Control shows, and play SoundCloud-powered transmissions."
+    t("meta.radioTitle"),
+    t("meta.radioDescription")
   );
   const isLive = radioState.mode === "live";
   const title = isLive ? radioState.liveTitle || "BPM CTRL Live" : currentTrack?.title || "Transmission Standby";
@@ -47,14 +49,14 @@ const Radio = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/85 backdrop-blur-xl">
-        <div className="h-14 px-4 md:px-6 flex items-center gap-4">
-          <a href="/" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Back to BPM CTRL">
+      <header className="fixed top-0 left-0 right-0 z-50 px-3 pt-3">
+        <div className="liquid-glass h-14 rounded-full px-4 md:px-6 flex items-center gap-4">
+          <a href="/" className="liquid-content text-muted-foreground hover:text-primary transition-colors" aria-label={t("common.back")}>
             <ArrowLeft className="w-4 h-4" />
           </a>
-          <img src={logo} alt="BPM CTRL" className="h-7 w-auto" />
+          <img src={logo} alt="BPM CTRL" className="liquid-content h-7 w-auto" />
 
-          <div className="ml-auto flex items-center gap-3 min-w-0">
+          <div className="liquid-content ml-auto flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={togglePlay}

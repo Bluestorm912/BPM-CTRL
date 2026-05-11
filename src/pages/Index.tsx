@@ -17,19 +17,27 @@ import CommunitySection from "@/components/CommunitySection";
 import FirstTimeGuide from "@/components/FirstTimeGuide";
 import InstallGuide from "@/components/InstallGuide";
 import LiquidActionBar from "@/components/LiquidActionBar";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 const Index = () => {
   const links = useSiteLinks();
+  const { t } = useLanguage();
   const featured = soundCloudTransmissions.find((item) => item.featured) || soundCloudTransmissions[0];
   usePageMeta(
-    "BPM CTRL - Radio, Playlists, Drops",
-    "BPM CTRL is a black-glass music and culture app for radio, playlists, members, and drops."
+    t("meta.homeTitle"),
+    t("meta.homeDescription")
   );
+  const tiles = [
+    [t("home.tiles.radio"), t("home.tiles.radioText")],
+    [t("home.tiles.playlists"), t("home.tiles.playlistsText")],
+    [t("home.tiles.members"), t("home.tiles.membersText")],
+    [t("home.tiles.shop"), t("home.tiles.shopText")],
+  ];
 
   return (
     <div className="min-h-screen bg-background">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:px-4 focus:py-2 focus:rounded focus:bg-primary focus:text-primary-foreground focus:font-display focus:text-sm focus:tracking-wider focus:outline-none">
-        Skip to content
+        {t("home.skip")}
       </a>
       <Navbar />
       <TransmissionTicker />
@@ -40,10 +48,10 @@ const Index = () => {
         <section className="px-4 md:px-6 py-14 md:py-20 border-y border-primary/15 bg-transparent">
           <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-[420px_minmax(0,1fr)] gap-6">
             <div>
-              <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">Live Console</p>
-              <h2 className="mt-2 font-display text-3xl md:text-5xl font-black gradient-text-orange">PRESS PLAY FIRST</h2>
+              <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">{t("home.liveConsole")}</p>
+              <h2 className="mt-2 font-display text-3xl md:text-5xl font-black gradient-text-orange">{t("home.playFirst")}</h2>
               <p className="mt-4 text-foreground/68 font-body">
-                The first screen is built for listening: one player, one featured transmission, and clear routes into radio, drops, and community.
+                {t("home.playFirstBody")}
               </p>
               <div className="mt-6">
                 <RadioPlayerPanel />
@@ -59,24 +67,19 @@ const Index = () => {
               <img src={heroBg} alt="BPM Control radio atmosphere" className="absolute inset-0 h-full w-full object-cover opacity-35" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
               <div className="relative z-10 p-6 md:p-10 h-full flex flex-col justify-end">
-                <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">Latest Transmission</p>
-                <h2 className="mt-3 font-display text-4xl md:text-6xl font-black gradient-text-orange">SIGNAL ARCHIVE</h2>
+                <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">{t("home.latest")}</p>
+                <h2 className="mt-3 font-display text-4xl md:text-6xl font-black gradient-text-orange">{t("home.archiveTitle")}</h2>
                 <p className="mt-4 max-w-2xl text-foreground/68">
-                  Browse sets, playlists, radio notes, and cultural drops without leaving the BPM CTRL app.
+                  {t("home.archiveBody")}
                 </p>
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <a href="/radio"><Button variant="neon" size="lg">Open Radio</Button></a>
-                  <a href="/shop"><Button variant="portal" size="lg">View Drops</Button></a>
+                  <a href="/radio"><Button variant="neon" size="lg">{t("common.openRadio")}</Button></a>
+                  <a href="/shop"><Button variant="portal" size="lg">{t("common.viewDrops")}</Button></a>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-              {[
-                ["Live Radio", "stream inside the app"],
-                ["Playlists", "embedded music rooms"],
-                ["Members", "keep the signal active"],
-                ["Shop", "drops and member access"],
-              ].map(([title, text]) => (
+              {tiles.map(([title, text]) => (
                 <div key={title} className="glass-panel rounded-xl p-5">
                   <p className="font-display text-sm text-foreground">{title}</p>
                   <p className="mt-2 text-xs text-muted-foreground">{text}</p>
@@ -97,12 +100,12 @@ const Index = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <img src={logo} alt="BPM CTRL" className="h-6 w-auto" />
-            <span className="font-display text-xs tracking-[0.15em] text-muted-foreground">2026</span>
+            <span className="font-display text-xs tracking-[0.15em] text-muted-foreground">{t("home.footerYear")}</span>
           </div>
           <nav className="flex flex-wrap items-center justify-center gap-4 font-display text-xs tracking-wider uppercase text-muted-foreground">
-            <a href="/radio" className="hover:text-primary">Radio</a>
-            <a href="/shop" className="hover:text-primary">Shop</a>
-            <a href="/supporters" className="hover:text-primary">Members</a>
+            <a href="/radio" className="hover:text-primary">{t("nav.radio")}</a>
+            <a href="/shop" className="hover:text-primary">{t("nav.shop")}</a>
+            <a href="/supporters" className="hover:text-primary">{t("nav.members")}</a>
             <a href={links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-primary">Instagram</a>
           </nav>
         </div>

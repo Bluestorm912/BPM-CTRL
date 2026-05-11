@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { Download, Headphones, ShoppingBag, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 const STORAGE_KEY = "bpmctrl_first_time_guide_seen";
 
-const steps = [
-  { icon: Headphones, title: "Play", text: "Start with the live player or archive." },
-  { icon: Download, title: "Install", text: "Add BPM CTRL to your home screen." },
-  { icon: ShoppingBag, title: "Drops", text: "Browse shop releases and member access." },
-  { icon: Users, title: "Members", text: "Support the signal and stay close." },
-];
-
 const FirstTimeGuide = () => {
   const [visible, setVisible] = useState(false);
+  const { t } = useLanguage();
+  const steps = [
+    { icon: Headphones, title: t("firstVisit.playTitle"), text: t("firstVisit.playText") },
+    { icon: Download, title: t("firstVisit.installTitle"), text: t("firstVisit.installText") },
+    { icon: ShoppingBag, title: t("firstVisit.dropsTitle"), text: t("firstVisit.dropsText") },
+    { icon: Users, title: t("firstVisit.membersTitle"), text: t("firstVisit.membersText") },
+  ];
 
   useEffect(() => {
     setVisible(localStorage.getItem(STORAGE_KEY) !== "true");
@@ -31,9 +32,9 @@ const FirstTimeGuide = () => {
         <div className="liquid-content">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <p className="font-display text-[10px] uppercase tracking-[0.28em] text-primary">First Visit</p>
-              <h2 className="mt-1 font-display text-xl font-black text-foreground">Start inside the signal.</h2>
-              <p className="mt-2 text-sm text-foreground/66">Four quick paths. No account needed to begin.</p>
+              <p className="font-display text-[10px] uppercase tracking-[0.28em] text-primary">{t("firstVisit.eyebrow")}</p>
+              <h2 className="mt-1 font-display text-xl font-black text-foreground">{t("firstVisit.title")}</h2>
+              <p className="mt-2 text-sm text-foreground/66">{t("firstVisit.body")}</p>
             </div>
             <button
               type="button"
@@ -60,10 +61,10 @@ const FirstTimeGuide = () => {
 
           <div className="mt-4 flex gap-2">
             <a href="/radio" className="flex-1">
-              <Button variant="neon" className="w-full">Play Now</Button>
+              <Button variant="neon" className="w-full">{t("firstVisit.playNow")}</Button>
             </a>
             <button type="button" onClick={dismiss} className="liquid-button rounded-md px-4 font-display text-xs uppercase tracking-wider text-primary">
-              Got it
+              {t("firstVisit.gotIt")}
             </button>
           </div>
         </div>

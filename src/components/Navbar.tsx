@@ -3,19 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Radio, Menu, X, Instagram, Twitter, Music } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useSiteLinks } from "@/hooks/useSiteLinks";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/radio", label: "Radio" },
-  { href: "/shop", label: "Shop" },
-  { href: "/supporters", label: "Members" },
-  { href: "/#transmissions", label: "Archive" },
-  { href: "/#mission", label: "Mission" },
+const navLinks = [
+  { href: "/", key: "nav.home" },
+  { href: "/radio", key: "nav.radio" },
+  { href: "/shop", key: "nav.shop" },
+  { href: "/supporters", key: "nav.members" },
+  { href: "/#transmissions", key: "nav.archive" },
+  { href: "/#mission", key: "nav.mission" },
 ];
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const links = useSiteLinks();
+  const { t } = useLanguage();
 
   return (
     <motion.nav
@@ -32,9 +34,9 @@ const Navbar = () => {
         </a>
 
         <div className="liquid-content hidden md:flex items-center gap-6 text-xs font-display tracking-[0.15em] text-muted-foreground uppercase">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <a key={link.href} href={link.href} className="hover:text-primary transition-colors">
-              {link.label}
+              {t(link.key)}
             </a>
           ))}
         </div>
@@ -54,7 +56,7 @@ const Navbar = () => {
 
           <a href="/radio" className="liquid-button flex items-center gap-1.5 rounded-full px-3 py-1.5 text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
             <Radio className="w-3 h-3" />
-            Play
+            {t("nav.play")}
           </a>
 
           <button
@@ -76,14 +78,14 @@ const Navbar = () => {
             className="md:hidden border-t border-primary/15 bg-background/90 backdrop-blur-2xl overflow-hidden"
           >
             <div className="px-4 py-4 flex flex-col gap-3">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
                   className="text-sm font-display tracking-[0.15em] text-muted-foreground uppercase hover:text-primary transition-colors py-2 border-b border-primary/10"
                 >
-                  {link.label}
+                  {t(link.key)}
                 </a>
               ))}
             </div>
