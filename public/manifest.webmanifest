@@ -1,0 +1,55 @@
+{
+  "name": "BPM CTRL",
+  "short_name": "BPM CTRL",
+  "description": "BPM CTRL is a live signal for Afro house culture, radio, community, supporters, and shop drops.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0b0706",
+  "theme_color": "#0b0706",
+  "orientation": "portrait-primary",
+  "categories": ["music", "entertainment", "shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Open Radio",
+      "short_name": "Radio",
+      "description": "Tune into the BPM CTRL radio signal.",
+      "url": "/radio",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Open Shop",
+      "short_name": "Shop",
+      "description": "Browse BPM CTRL shop drops.",
+      "url": "/shop",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

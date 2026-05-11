@@ -606,7 +606,8 @@ INSERT INTO public.site_content (section, content_key, content_value, content_ty
 ('radio', 'radio_stream_url', '', 'text', 1),
 ('radio', 'radio_live_title', '', 'text', 2),
 ('radio', 'radio_live_description', '', 'text', 3),
-('radio', 'radio_live_image', '', 'text', 4)
+('radio', 'radio_live_image', '', 'text', 4),
+('radio', 'radio_spotify_playlist_url', '', 'text', 5)
 ON CONFLICT (section, content_key) DO NOTHING;
 
 INSERT INTO public.shop_products (slug, name, description, category, price, currency, status, stock_quantity)

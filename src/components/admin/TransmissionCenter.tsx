@@ -43,6 +43,7 @@ const TransmissionCenter = () => {
         liveTitle: map.radio_live_title || "",
         liveDescription: map.radio_live_description || "",
         liveImage: map.radio_live_image || "",
+        spotifyPlaylistUrl: map.radio_spotify_playlist_url || "",
       };
     },
   });
@@ -59,6 +60,7 @@ const TransmissionCenter = () => {
     liveTitle: "",
     liveDescription: "",
     liveImage: "",
+    spotifyPlaylistUrl: "",
   });
 
   const currentMode = radioStateData?.mode || "off";
@@ -70,6 +72,7 @@ const TransmissionCenter = () => {
       liveTitle: radioStateData.liveTitle,
       liveDescription: radioStateData.liveDescription,
       liveImage: radioStateData.liveImage,
+      spotifyPlaylistUrl: radioStateData.spotifyPlaylistUrl,
     });
   }, [radioStateData]);
 
@@ -146,6 +149,7 @@ const TransmissionCenter = () => {
         liveTitle: liveForm.liveTitle,
         liveDescription: liveForm.liveDescription,
         liveImage: liveForm.liveImage,
+        spotifyPlaylistUrl: liveForm.spotifyPlaylistUrl,
       });
 
       toast({ title: "Live transmission metadata saved" });
@@ -172,6 +176,7 @@ const TransmissionCenter = () => {
           liveTitle: liveForm.liveTitle,
           liveDescription: liveForm.liveDescription,
           liveImage: liveForm.liveImage,
+          spotifyPlaylistUrl: liveForm.spotifyPlaylistUrl,
         });
       } else if (mode === "prerecorded") {
         if (!tracks || tracks.filter((track) => track.is_active).length === 0) {
@@ -304,6 +309,19 @@ const TransmissionCenter = () => {
                   className="mt-1 bg-muted border-border"
                   placeholder="https://..."
                 />
+              </div>
+
+              <div className="md:col-span-2">
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Spotify Playlist Link</Label>
+                <Input
+                  value={liveForm.spotifyPlaylistUrl}
+                  onChange={(e) => setLiveForm({ ...liveForm, spotifyPlaylistUrl: e.target.value })}
+                  className="mt-1 bg-muted border-border"
+                  placeholder="https://open.spotify.com/playlist/..."
+                />
+                <p className="mt-2 text-xs text-muted-foreground font-body">
+                  Paste a Spotify playlist link here to show a streamable Spotify player on the public site.
+                </p>
               </div>
             </div>
 

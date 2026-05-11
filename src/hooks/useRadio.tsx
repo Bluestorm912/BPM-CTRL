@@ -25,6 +25,7 @@ export interface RadioState {
   liveTitle: string;
   liveDescription: string;
   liveImage: string;
+  spotifyPlaylistUrl: string;
 }
 
 const RADIO_DEFAULT_STATE: RadioState = {
@@ -33,6 +34,7 @@ const RADIO_DEFAULT_STATE: RadioState = {
   liveTitle: "",
   liveDescription: "",
   liveImage: "",
+  spotifyPlaylistUrl: "",
 };
 
 const RADIO_KEY_SORT_ORDER: Record<string, number> = {
@@ -41,6 +43,7 @@ const RADIO_KEY_SORT_ORDER: Record<string, number> = {
   radio_live_title: 2,
   radio_live_description: 3,
   radio_live_image: 4,
+  radio_spotify_playlist_url: 5,
 };
 
 const fetchRadioState = async (): Promise<RadioState> => {
@@ -62,6 +65,7 @@ const fetchRadioState = async (): Promise<RadioState> => {
     liveTitle: map.radio_live_title || "",
     liveDescription: map.radio_live_description || "",
     liveImage: map.radio_live_image || "",
+    spotifyPlaylistUrl: map.radio_spotify_playlist_url || "",
   };
 };
 
@@ -304,6 +308,9 @@ export const useUpdateRadioState = () => {
         updates.push({ key: "radio_live_description", value: state.liveDescription });
       }
       if (state.liveImage !== undefined) updates.push({ key: "radio_live_image", value: state.liveImage });
+      if (state.spotifyPlaylistUrl !== undefined) {
+        updates.push({ key: "radio_spotify_playlist_url", value: state.spotifyPlaylistUrl });
+      }
 
       for (const update of updates) {
         await upsertRadioContent(update.key, update.value);
