@@ -1,4 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useContext,
+  useMemo,
+  type Dispatch,
+  type MutableRefObject,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -26,6 +38,23 @@ export interface RadioState {
   liveDescription: string;
   liveImage: string;
   spotifyPlaylistUrl: string;
+}
+
+interface RadioPlayerContextValue {
+  radioState: RadioState;
+  tracks: RadioTrack[];
+  currentTrack: RadioTrack | null;
+  currentTrackIndex: number;
+  isPlaying: boolean;
+  setIsPlaying: Dispatch<SetStateAction<boolean>>;
+  playNext: () => void;
+  togglePlay: () => void;
+  audioRef: MutableRefObject<HTMLAudioElement | null>;
+  canPlay: boolean;
+  isLive: boolean;
+  title: string;
+  detail: string;
+  image: string;
 }
 
 const RADIO_DEFAULT_STATE: RadioState = {
@@ -80,7 +109,9 @@ const fetchRadioTracks = async (): Promise<RadioTrack[]> => {
   return (data || []) as RadioTrack[];
 };
 
-export const useRadioPlayer = () => {
+const RadioPlayerContext = createContext<RadioPlayerContextValue | null>(null);
+
+export const RadioPlayerProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
 
   const { data: radioState } = useQuery({
@@ -96,13 +127,10 @@ export const useRadioPlayer = () => {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const channelNameRef = useRef(
-    `radio-state-${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Date.now()}`
-  );
 
   useEffect(() => {
     const channel = supabase
-      .channel(channelNameRef.current)
+      .channel("radio-player-global")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "site_content", filter: "section=eq.radio" },
@@ -131,6 +159,13 @@ export const useRadioPlayer = () => {
   }, [tracks?.length]);
 
   const currentTrack = tracks && tracks.length > 0 ? tracks[currentTrackIndex % tracks.length] : null;
+  const effectiveRadioState = radioState || RADIO_DEFAULT_STATE;
+  const isLive = effectiveRadioState.mode === "live";
+  const sourceUrl = isLive ? effectiveRadioState.streamUrl : effectiveRadioState.mode === "prerecorded" ? currentTrack?.audio_url || "" : "";
+  const canPlay = !!sourceUrl;
+  const title = isLive ? effectiveRadioState.liveTitle || "BPM CTRL Live" : currentTrack?.title || "BPM CTRL Radio";
+  const detail = isLive ? effectiveRadioState.liveDescription || "Live from the control room." : currentTrack?.artist || "Curated BPM CTRL audio.";
+  const image = isLive ? effectiveRadioState.liveImage || "" : currentTrack?.cover_image_url || "";
 
   const playNext = useCallback(() => {
     if (tracks && tracks.length > 0) {
@@ -139,12 +174,13 @@ export const useRadioPlayer = () => {
   }, [tracks]);
 
   const togglePlay = useCallback(() => {
-    setIsPlaying((value) => !value);
-  }, []);
+    setIsPlaying((value) => (canPlay ? !value : false));
+  }, [canPlay]);
 
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
+      audioRef.current.preload = "auto";
       audioRef.current.addEventListener("ended", playNext);
     }
 
@@ -160,26 +196,27 @@ export const useRadioPlayer = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (radioState?.mode === "live" && radioState.streamUrl) {
-      audio.src = radioState.streamUrl;
-      if (isPlaying) audio.play().catch(() => {});
+    if (!sourceUrl) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      setIsPlaying(false);
       return;
     }
 
-    if (radioState?.mode === "prerecorded" && currentTrack?.audio_url) {
-      audio.src = currentTrack.audio_url;
-      if (isPlaying) audio.play().catch(() => {});
-      return;
+    if (audio.src !== sourceUrl) {
+      audio.src = sourceUrl;
+      audio.load();
     }
 
-    audio.pause();
-    audio.src = "";
-    setIsPlaying(false);
-  }, [radioState?.mode, radioState?.streamUrl, currentTrack?.audio_url, isPlaying]);
+    if (isPlaying) {
+      audio.play().catch(() => setIsPlaying(false));
+    }
+  }, [sourceUrl, isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !audio.src) return;
+    if (!audio || !sourceUrl) return;
 
     if (isPlaying) {
       audio.play().catch(() => {
@@ -188,10 +225,51 @@ export const useRadioPlayer = () => {
     } else {
       audio.pause();
     }
-  }, [isPlaying]);
+  }, [isPlaying, sourceUrl]);
 
-  return {
-    radioState: radioState || RADIO_DEFAULT_STATE,
+  useEffect(() => {
+    const mediaSession = (navigator as any).mediaSession;
+    if (!mediaSession) return;
+    const setMediaAction = (action: string, handler: (() => void) | null) => {
+      try {
+        mediaSession.setActionHandler(action, handler);
+      } catch {
+        // Some browsers expose Media Session but only support a subset of actions.
+      }
+    };
+
+    const artwork = image
+      ? [{ src: image, sizes: "512x512", type: "image/png" }]
+      : [
+          { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+        ];
+
+    if ((window as any).MediaMetadata) {
+      mediaSession.metadata = new (window as any).MediaMetadata({
+        title,
+        artist: isLive ? "BPM CTRL Live" : detail,
+        album: "BPM CTRL",
+        artwork,
+      });
+    }
+
+    mediaSession.playbackState = isPlaying ? "playing" : "paused";
+    setMediaAction("play", canPlay ? () => setIsPlaying(true) : null);
+    setMediaAction("pause", () => setIsPlaying(false));
+    setMediaAction("stop", () => setIsPlaying(false));
+    setMediaAction("nexttrack", !isLive && (tracks || []).length > 1 ? playNext : null);
+
+    return () => {
+      setMediaAction("play", null);
+      setMediaAction("pause", null);
+      setMediaAction("stop", null);
+      setMediaAction("nexttrack", null);
+    };
+  }, [canPlay, detail, image, isLive, isPlaying, playNext, title, tracks]);
+
+  const value = useMemo<RadioPlayerContextValue>(() => ({
+    radioState: effectiveRadioState,
     tracks: tracks || [],
     currentTrack,
     currentTrackIndex,
@@ -200,7 +278,23 @@ export const useRadioPlayer = () => {
     playNext,
     togglePlay,
     audioRef,
-  };
+    canPlay,
+    isLive,
+    title,
+    detail,
+    image,
+  }), [canPlay, currentTrack, currentTrackIndex, detail, effectiveRadioState, image, isLive, isPlaying, playNext, title, togglePlay, tracks]);
+
+  return <RadioPlayerContext.Provider value={value}>{children}</RadioPlayerContext.Provider>;
+};
+
+export const useRadioPlayer = () => {
+  const context = useContext(RadioPlayerContext);
+  if (!context) {
+    throw new Error("useRadioPlayer must be used inside RadioPlayerProvider");
+  }
+
+  return context;
 };
 
 export const useAllRadioTracks = () =>

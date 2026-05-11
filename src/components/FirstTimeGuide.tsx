@@ -26,7 +26,7 @@ const FirstTimeGuide = () => {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-24 z-50 md:bottom-6 md:left-auto md:right-6 md:w-[420px]">
+    <div className="fixed inset-x-3 bottom-40 z-50 md:bottom-28 md:left-auto md:right-6 md:w-[420px]">
       <div className="liquid-glass rounded-3xl p-4">
         <div className="liquid-content">
           <div className="mb-4 flex items-start justify-between gap-4">

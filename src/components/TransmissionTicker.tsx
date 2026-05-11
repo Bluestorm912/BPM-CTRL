@@ -1,61 +1,9 @@
-import { useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Radio, Pause, Play, SkipForward, Volume2 } from "lucide-react";
 import { useRadioPlayer } from "@/hooks/useRadio";
 
 const TransmissionTicker = () => {
-  const {
-    radioState,
-    currentTrack,
-    isPlaying,
-    setIsPlaying,
-    playNext,
-    togglePlay,
-    audioRef,
-    tracks,
-  } = useRadioPlayer();
-
-  // Handle audio element
-  useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.addEventListener("ended", playNext);
-    }
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeEventListener("ended", playNext);
-      }
-    };
-  }, [playNext, audioRef]);
-
-  // Update audio source based on mode
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (radioState.mode === "live" && radioState.streamUrl) {
-      audio.src = radioState.streamUrl;
-      if (isPlaying) audio.play().catch(() => {});
-    } else if (radioState.mode === "prerecorded" && currentTrack) {
-      audio.src = currentTrack.audio_url;
-      if (isPlaying) audio.play().catch(() => {});
-    } else {
-      audio.pause();
-      audio.src = "";
-    }
-  }, [radioState.mode, radioState.streamUrl, currentTrack, audioRef]);
-
-  // Handle play/pause state
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !audio.src) return;
-    if (isPlaying) {
-      audio.play().catch(() => {});
-    } else {
-      audio.pause();
-    }
-  }, [isPlaying, audioRef]);
+  const { radioState, currentTrack, isPlaying, playNext, togglePlay, tracks } = useRadioPlayer();
 
   if (radioState.mode === "off") return null;
 

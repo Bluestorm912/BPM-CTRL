@@ -7,6 +7,8 @@ import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useTrackPageVisit } from "@/hooks/useAnalytics";
+import { RadioPlayerProvider } from "@/hooks/useRadio";
+import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
 
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
@@ -37,13 +39,16 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
+    <RadioPlayerProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+          <GlobalNowPlayingBar />
+        </BrowserRouter>
+      </TooltipProvider>
+    </RadioPlayerProvider>
   </QueryClientProvider>
 );
 
