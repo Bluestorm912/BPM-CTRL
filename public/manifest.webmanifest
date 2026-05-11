@@ -6,8 +6,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
-  "background_color": "#0b0706",
-  "theme_color": "#0b0706",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "categories": ["music", "entertainment", "shopping", "lifestyle"],
   "icons": [

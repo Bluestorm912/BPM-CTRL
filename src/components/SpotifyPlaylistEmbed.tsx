@@ -32,13 +32,13 @@ const SpotifyPlaylistEmbed = ({ playlistUrl }: { playlistUrl: string }) => {
             <Music2 className="h-5 w-5 text-primary" />
           </span>
           <div>
-            <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">Spotify Signal</p>
-            <h2 className="font-display text-2xl md:text-3xl font-black text-foreground">BPM CTRL PLAYLIST</h2>
+            <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">Playlist Room</p>
+            <h2 className="font-display text-2xl md:text-3xl font-black text-foreground">BPM CTRL CURATION</h2>
           </div>
         </div>
         <iframe
           title="BPM CTRL Spotify playlist"
-          className="h-[380px] w-full rounded-xl border border-border bg-card"
+          className="h-[380px] w-full rounded-xl border border-primary/20 bg-transparent"
           src={embedUrl}
           loading="lazy"
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"

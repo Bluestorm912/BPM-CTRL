@@ -6,12 +6,12 @@ import SignalStatusBadge from "@/components/SignalStatusBadge";
 const RadioPlayerPanel = ({ compact = false }: { compact?: boolean }) => {
   const { radioState, currentTrack, tracks, isPlaying, togglePlay, playNext } = useRadioPlayer();
   const isLive = radioState.mode === "live";
-  const title = isLive ? radioState.liveTitle || "BPM CTRL Live" : currentTrack?.title || "Radio Standby";
-  const detail = isLive ? radioState.liveDescription || "Live signal ready." : currentTrack?.artist || "Upload tracks in the CMS.";
+  const title = isLive ? radioState.liveTitle || "BPM CTRL Live" : currentTrack?.title || "Signal Standby";
+  const detail = isLive ? radioState.liveDescription || "Live from the control room." : currentTrack?.artist || "Curated audio will appear here.";
   const canPlay = isLive ? !!radioState.streamUrl : !!currentTrack?.audio_url;
 
   return (
-    <div className={`glow-border-orange rounded-2xl bg-card relative overflow-hidden ${compact ? "p-4" : "p-5 md:p-7"}`}>
+    <div className={`glow-border-orange rounded-2xl relative overflow-hidden ${compact ? "p-4" : "p-5 md:p-7"}`}>
       <div className="scanline absolute inset-0 opacity-10" />
       <div className="relative z-10">
         <div className="flex items-start justify-between gap-4 mb-6">
@@ -23,7 +23,7 @@ const RadioPlayerPanel = ({ compact = false }: { compact?: boolean }) => {
         <div className="mt-6 flex items-center gap-3">
           <Button variant="neon" size={compact ? "sm" : "lg"} onClick={togglePlay} disabled={!canPlay}>
             {isPlaying ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-            {isPlaying ? "Pause" : "Listen Live"}
+            {isPlaying ? "Pause" : "Play"}
           </Button>
           {!isLive && tracks.length > 1 && (
             <Button variant="portal" size={compact ? "sm" : "lg"} onClick={playNext}>

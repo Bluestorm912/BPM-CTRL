@@ -68,11 +68,11 @@ const TransmissionTicker = () => {
   if (!title) return null;
 
   const tickerContent = isLive
-    ? `🔴 LIVE — ${title}${description ? ` — ${description}` : ""}`
-    : `📡 NOW PLAYING — ${title}${artist ? ` by ${artist}` : ""}${description ? ` — ${description}` : ""}`;
+    ? `LIVE / ${title}${description ? ` / ${description}` : ""}`
+    : `NOW PLAYING / ${title}${artist ? ` / ${artist}` : ""}${description ? ` / ${description}` : ""}`;
 
   return (
-    <div className="fixed top-[53px] left-0 right-0 z-40 bg-card/90 backdrop-blur-md border-b border-primary/20 overflow-hidden">
+    <div className="fixed top-[53px] left-0 right-0 z-40 bg-background/70 backdrop-blur-2xl border-b border-primary/20 overflow-hidden">
       <div className="flex items-center h-10">
         {/* Controls */}
         <div className="flex items-center gap-1 px-3 border-r border-border shrink-0">

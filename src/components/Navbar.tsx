@@ -8,7 +8,7 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/radio", label: "Radio" },
   { href: "/shop", label: "Shop" },
-  { href: "/supporters", label: "Supporters" },
+  { href: "/supporters", label: "Members" },
   { href: "/#transmissions", label: "Archive" },
   { href: "/#mission", label: "Mission" },
 ];
@@ -22,7 +22,7 @@ const Navbar = () => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-border/40"
+      className="fixed top-0 left-0 right-0 z-50 bg-background/55 backdrop-blur-2xl border-b border-primary/15"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -52,9 +52,9 @@ const Navbar = () => {
             </a>
           </div>
 
-          <a href="/radio" className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-primary/30 text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
+          <a href="/radio" className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-primary/30 bg-transparent text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
             <Radio className="w-3 h-3" />
-            Listen
+            Play
           </a>
 
           <button
@@ -73,7 +73,7 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl overflow-hidden"
+            className="md:hidden border-t border-primary/15 bg-background/90 backdrop-blur-2xl overflow-hidden"
           >
             <div className="px-4 py-4 flex flex-col gap-3">
               {NAV_LINKS.map((link) => (
@@ -81,7 +81,7 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-sm font-display tracking-[0.15em] text-muted-foreground uppercase hover:text-primary transition-colors py-2 border-b border-border/20"
+                  className="text-sm font-display tracking-[0.15em] text-muted-foreground uppercase hover:text-primary transition-colors py-2 border-b border-primary/10"
                 >
                   {link.label}
                 </a>
