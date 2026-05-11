@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useSectionContent, getContentJSON, getContentValue } from "@/hooks/useSiteContent";
+import { usePublishedCultureStories } from "@/hooks/useCultureStories";
 
 interface ArticleTemplate {
   titleMaxWords: number;
@@ -61,6 +62,7 @@ const getEmbedUrl = (url: string) => {
 
 const ArticlesSection = () => {
   const { data: content } = useSectionContent("articles");
+  const { data: publishedStories } = usePublishedCultureStories();
 
   const tagline = getContentValue(content, "articles_tagline", "Field Notes");
   const title = getContentValue(content, "articles_title", "TRANSMISSION ARTICLES");
@@ -76,7 +78,21 @@ const ArticlesSection = () => {
     [DEFAULT_TEMPLATE]
   )[0] || DEFAULT_TEMPLATE;
 
-  const articles = getContentJSON<ArticleItem>(content, "articles_items", []);
+  const legacyArticles = getContentJSON<ArticleItem>(content, "articles_items", []);
+  const articles: ArticleItem[] = publishedStories?.length
+    ? publishedStories.map((story) => ({
+        id: story.id,
+        title: story.title,
+        intro: story.intro,
+        body: story.body,
+        heroImage: story.hero_image,
+        galleryImages: story.gallery_images,
+        audioUrl: story.audio_url,
+        videoUrl: story.video_url,
+        publishedAt: story.published_at || story.created_at,
+        updatedAt: story.updated_at,
+      }))
+    : legacyArticles;
 
   return (
     <section id="articles" className="py-24 px-4 relative">

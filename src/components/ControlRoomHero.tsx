@@ -34,7 +34,7 @@ const ControlRoomHero = () => {
               {t("common.listenNow")}
             </Button>
           </a>
-          <a href="/supporters">
+          <a href="/careers">
             <Button variant="portal" size="xl">
               <Users className="h-5 w-5 mr-2" />
               {t("hero.join")}

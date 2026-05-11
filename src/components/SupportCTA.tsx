@@ -20,7 +20,7 @@ const SupportCTA = () => {
             {t("supportCta.body")}
           </p>
         </div>
-        <a href="/supporters">
+        <a href="/careers#support">
           <Button variant="neon" size="xl">
             <Heart className="h-5 w-5 mr-2" />
             {t("supportCta.action")}

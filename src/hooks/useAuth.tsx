@@ -3,6 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
 const ADMIN_EMAILS = new Set(["michaelseth13@gmail.com", "bpmctrl101@gmail.com"]);
+export type AppRole =
+  | "admin"
+  | "editor"
+  | "writer"
+  | "creator"
+  | "media_manager"
+  | "shop_manager"
+  | "analyst"
+  | "moderator"
+  | "user";
 
 const hasAdminMetadata = (user: User | null) => {
   if (!user) return false;
@@ -19,6 +29,7 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [roles, setRoles] = useState<AppRole[]>([]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -26,7 +37,8 @@ export const useAuth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setIsAdmin(hasAdminMetadata(session?.user ?? null));
-        setLoading(false);
+        setRoles(hasAdminMetadata(session?.user ?? null) ? ["admin"] : []);
+        setLoading(!!session?.user);
       }
     );
 
@@ -34,7 +46,8 @@ export const useAuth = () => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsAdmin(hasAdminMetadata(session?.user ?? null));
-      setLoading(false);
+      setRoles(hasAdminMetadata(session?.user ?? null) ? ["admin"] : []);
+      setLoading(!!session?.user);
     });
 
     return () => subscription.unsubscribe();
@@ -46,23 +59,36 @@ export const useAuth = () => {
     const checkAdmin = async () => {
       if (!user) {
         setIsAdmin(false);
+        setRoles([]);
+        setLoading(false);
         return;
       }
 
       const fallbackAdmin = hasAdminMetadata(user);
+      const fallbackRoles: AppRole[] = fallbackAdmin ? ["admin"] : [];
       setIsAdmin(fallbackAdmin);
+      setRoles(fallbackRoles);
 
       try {
-        const { data, error } = await supabase.rpc("has_role", {
-          _user_id: user.id,
-          _role: "admin",
-        });
+        const { data: roleRows } = await (supabase as any)
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
 
-        if (!cancelled && !error) {
-          setIsAdmin(!!data || fallbackAdmin);
+        const dbRoles = ((roleRows || []).map((row: any) => row.role) as AppRole[]).filter(Boolean);
+        const nextRoles = Array.from(new Set([...fallbackRoles, ...dbRoles]));
+
+        if (!cancelled) {
+          setRoles(nextRoles);
+          setIsAdmin(nextRoles.includes("admin"));
+          setLoading(false);
         }
       } catch {
-        if (!cancelled) setIsAdmin(fallbackAdmin);
+        if (!cancelled) {
+          setRoles(fallbackRoles);
+          setIsAdmin(fallbackAdmin);
+          setLoading(false);
+        }
       }
     };
 
@@ -85,5 +111,8 @@ export const useAuth = () => {
     return supabase.auth.signOut();
   };
 
-  return { user, session, loading, isAdmin, signIn, signUp, signOut };
+  const hasRole = (...allowed: AppRole[]) => roles.some((role) => allowed.includes(role));
+  const canAccessCms = hasRole("admin", "editor", "writer", "creator", "media_manager", "shop_manager", "analyst", "moderator");
+
+  return { user, session, loading, isAdmin, roles, hasRole, canAccessCms, signIn, signUp, signOut };
 };

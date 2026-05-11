@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Edit, Eye, EyeOff, LogOut, Upload, ArrowLeft, FileText, Image as ImageIcon, Link2, Music, Video, Radio, Newspaper, Database, AlertTriangle, Copy, BarChart3, ListChecks } from "lucide-react";
+import { Trash2, Plus, Edit, Eye, EyeOff, LogOut, Upload, ArrowLeft, FileText, Image as ImageIcon, Link2, Music, Video, Radio, Newspaper, Database, AlertTriangle, Copy, BarChart3, ListChecks, Users, ShoppingBag, Headphones } from "lucide-react";
 import type { SiteAsset } from "@/hooks/useSiteAssets";
 import EasyContentManager from "@/components/admin/EasyContentManager";
 import LinksManager from "@/components/admin/LinksManager";
@@ -16,6 +16,11 @@ import TransmissionCenter from "@/components/admin/TransmissionCenter";
 import ArticlesManager from "@/components/admin/ArticlesManager";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import ActivityLog from "@/components/admin/ActivityLog";
+import AppCopyManager from "@/components/admin/AppCopyManager";
+import TeamRolesManager from "@/components/admin/TeamRolesManager";
+import ShopProductsManager from "@/components/admin/ShopProductsManager";
+import DjSubmissionsManager from "@/components/admin/DjSubmissionsManager";
+import CommunityApplicationsManager from "@/components/admin/CommunityApplicationsManager";
 import { useLogActivity } from "@/hooks/useActivityLog";
 
 const SECTIONS = ["hero", "event", "broadcast", "style", "archive", "articles", "community", "gamification", "general"];
@@ -83,7 +88,7 @@ const assetPreview = (asset: SiteAsset) => {
 };
 
 const Admin = () => {
-  const { user, isAdmin, loading, signOut } = useAuth();
+  const { user, isAdmin, loading, signOut, canAccessCms, hasRole, roles } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: assets, isLoading: assetsLoading, error: assetsError } = useAllSiteAssets();
@@ -100,10 +105,10 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    if (!loading && (!user || !canAccessCms)) {
       navigate("/admin/login");
     }
-  }, [loading, user, isAdmin, navigate]);
+  }, [loading, user, canAccessCms, navigate]);
 
   if (loading) {
     return (
@@ -116,7 +121,7 @@ const Admin = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !canAccessCms) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="glow-border-orange rounded-2xl bg-card p-8 text-center max-w-md">
@@ -251,6 +256,37 @@ const Admin = () => {
     toast({ title: "Asset cloned", description: "The cloned asset is hidden until you publish it." });
   };
 
+  const canUse = (area: string) => {
+    if (hasRole("admin")) return true;
+    const permissions: Record<string, boolean> = {
+      content: hasRole("editor"),
+      appCopy: hasRole("editor"),
+      assets: hasRole("editor", "creator", "media_manager"),
+      links: hasRole("editor"),
+      transmission: hasRole("media_manager", "editor"),
+      articles: hasRole("editor", "writer", "creator", "moderator"),
+      djSets: hasRole("editor", "media_manager", "moderator"),
+      community: hasRole("editor", "moderator"),
+      shop: hasRole("shop_manager", "editor"),
+      analytics: hasRole("analyst", "editor"),
+      activity: hasRole("analyst", "editor", "moderator"),
+      team: false,
+    };
+    return !!permissions[area];
+  };
+
+  const defaultTab = canUse("articles")
+    ? "articles"
+    : canUse("content")
+      ? "content"
+      : canUse("assets")
+        ? "assets"
+        : canUse("shop")
+          ? "shop"
+          : canUse("analytics")
+          ? "analytics"
+          : "activity";
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
@@ -281,60 +317,98 @@ const Admin = () => {
           <p className="font-display text-xs tracking-[0.28em] text-primary uppercase mb-2">BPM CTRL Content Management</p>
           <h1 className="font-display text-3xl md:text-5xl font-black gradient-text-orange">CMS DASHBOARD</h1>
           <p className="text-sm text-muted-foreground font-body mt-2 max-w-2xl">
-            Manage website copy, media, ticket links, articles, and radio broadcasts from one branded publishing workspace.
+            Manage BPM CTRL as a culture platform: copy, media, contributors, stories, radio, shop, and analytics by assigned role.
+          </p>
+          <p className="mt-3 text-xs font-display tracking-wider uppercase text-primary">
+            Role: {roles.join(", ") || (isAdmin ? "admin" : "staff")}
           </p>
         </div>
 
-        <Tabs defaultValue="content" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-muted mb-8 flex-wrap h-auto p-1">
-            <TabsTrigger value="content" className="font-display text-xs tracking-wider gap-2">
+            {canUse("content") && <TabsTrigger value="content" className="font-display text-xs tracking-wider gap-2">
               <FileText className="w-3.5 h-3.5" /> Frontend
-            </TabsTrigger>
-            <TabsTrigger value="assets" className="font-display text-xs tracking-wider gap-2">
+            </TabsTrigger>}
+            {canUse("appCopy") && <TabsTrigger value="app-copy" className="font-display text-xs tracking-wider gap-2">
+              <FileText className="w-3.5 h-3.5" /> App Copy
+            </TabsTrigger>}
+            {canUse("assets") && <TabsTrigger value="assets" className="font-display text-xs tracking-wider gap-2">
               <ImageIcon className="w-3.5 h-3.5" /> Assets
-            </TabsTrigger>
-            <TabsTrigger value="links" className="font-display text-xs tracking-wider gap-2">
+            </TabsTrigger>}
+            {canUse("links") && <TabsTrigger value="links" className="font-display text-xs tracking-wider gap-2">
               <Link2 className="w-3.5 h-3.5" /> Links
-            </TabsTrigger>
-            <TabsTrigger value="transmission" className="font-display text-xs tracking-wider gap-2">
+            </TabsTrigger>}
+            {canUse("transmission") && <TabsTrigger value="transmission" className="font-display text-xs tracking-wider gap-2">
               <Radio className="w-3.5 h-3.5" /> Transmission
-            </TabsTrigger>
-            <TabsTrigger value="articles" className="font-display text-xs tracking-wider gap-2">
-              <Newspaper className="w-3.5 h-3.5" /> Articles
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="font-display text-xs tracking-wider gap-2">
+            </TabsTrigger>}
+            {canUse("articles") && <TabsTrigger value="articles" className="font-display text-xs tracking-wider gap-2">
+              <Newspaper className="w-3.5 h-3.5" /> Editorial
+            </TabsTrigger>}
+            {canUse("djSets") && <TabsTrigger value="dj-sets" className="font-display text-xs tracking-wider gap-2">
+              <Headphones className="w-3.5 h-3.5" /> DJ Sets
+            </TabsTrigger>}
+            {canUse("community") && <TabsTrigger value="community" className="font-display text-xs tracking-wider gap-2">
+              <Users className="w-3.5 h-3.5" /> Community
+            </TabsTrigger>}
+            {canUse("shop") && <TabsTrigger value="shop" className="font-display text-xs tracking-wider gap-2">
+              <ShoppingBag className="w-3.5 h-3.5" /> Shop
+            </TabsTrigger>}
+            {canUse("analytics") && <TabsTrigger value="analytics" className="font-display text-xs tracking-wider gap-2">
               <BarChart3 className="w-3.5 h-3.5" /> Analytics
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="font-display text-xs tracking-wider gap-2">
+            </TabsTrigger>}
+            {canUse("activity") && <TabsTrigger value="activity" className="font-display text-xs tracking-wider gap-2">
               <ListChecks className="w-3.5 h-3.5" /> Activity
-            </TabsTrigger>
+            </TabsTrigger>}
+            {canUse("team") && <TabsTrigger value="team" className="font-display text-xs tracking-wider gap-2">
+              <Users className="w-3.5 h-3.5" /> Team
+            </TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="content">
+          {canUse("content") && <TabsContent value="content">
             <EasyContentManager />
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="links">
+          {canUse("appCopy") && <TabsContent value="app-copy">
+            <AppCopyManager />
+          </TabsContent>}
+
+          {canUse("links") && <TabsContent value="links">
             <LinksManager />
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="transmission">
+          {canUse("transmission") && <TabsContent value="transmission">
             <TransmissionCenter />
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="articles">
+          {canUse("articles") && <TabsContent value="articles">
             <ArticlesManager />
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="analytics">
+          {canUse("djSets") && <TabsContent value="dj-sets">
+            <DjSubmissionsManager />
+          </TabsContent>}
+
+          {canUse("community") && <TabsContent value="community">
+            <CommunityApplicationsManager />
+          </TabsContent>}
+
+          {canUse("shop") && <TabsContent value="shop">
+            <ShopProductsManager />
+          </TabsContent>}
+
+          {canUse("analytics") && <TabsContent value="analytics">
             <AnalyticsDashboard />
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="activity">
+          {canUse("activity") && <TabsContent value="activity">
             <ActivityLog />
-          </TabsContent>
+          </TabsContent>}
 
-          <TabsContent value="assets">
+          {canUse("team") && <TabsContent value="team">
+            <TeamRolesManager />
+          </TabsContent>}
+
+          {canUse("assets") && <TabsContent value="assets">
             {assetsError ? (
               <CMSSetupNotice message={(assetsError as Error).message} />
             ) : (
@@ -506,7 +580,7 @@ const Admin = () => {
             </Tabs>
             </>
             )}
-          </TabsContent>
+          </TabsContent>}
         </Tabs>
       </main>
     </div>

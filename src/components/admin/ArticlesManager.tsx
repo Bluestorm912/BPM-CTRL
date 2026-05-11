@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Edit, FileText, ImageIcon, Music, Plus, Save, Send, Trash2, Upload, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useSectionContent, useCreateContent, useUpdateContent, getContentValue } from "@/hooks/useSiteContent";
 import { uploadAssetFile } from "@/hooks/useSiteAssets";
-import { Newspaper, Save, Plus, Edit, Trash2, Upload, ImageIcon, Music, Video } from "lucide-react";
+import {
+  useCreateCultureStory,
+  useCultureStories,
+  useDeleteCultureStory,
+  useUpdateCultureStory,
+  type CultureStory,
+  type StoryStatus,
+} from "@/hooks/useCultureStories";
+import { useLogActivity } from "@/hooks/useActivityLog";
 
 interface ArticleTemplate {
   titleMaxWords: number;
@@ -19,27 +29,17 @@ interface ArticleTemplate {
   galleryCount: number;
 }
 
-interface ArticleItem {
-  id: string;
+interface StoryFormState {
   title: string;
   intro: string;
   body: string;
-  heroImage: string;
-  galleryImages: string[];
-  audioUrl: string;
-  videoUrl: string;
-  publishedAt: string;
-  updatedAt: string;
-}
-
-interface ArticleFormState {
-  title: string;
-  intro: string;
-  body: string;
-  heroImage: string;
-  galleryImages: string[];
-  audioUrl: string;
-  videoUrl: string;
+  category: string;
+  tags: string;
+  hero_image: string;
+  gallery_images: string[];
+  audio_url: string;
+  video_url: string;
+  editor_notes: string;
 }
 
 const DEFAULT_TEMPLATE: ArticleTemplate = {
@@ -53,7 +53,22 @@ const DEFAULT_TEMPLATE: ArticleTemplate = {
   galleryCount: 2,
 };
 
+const emptyForm = (galleryCount: number): StoryFormState => ({
+  title: "",
+  intro: "",
+  body: "",
+  category: "Culture",
+  tags: "",
+  hero_image: "",
+  gallery_images: Array.from({ length: galleryCount }, () => ""),
+  audio_url: "",
+  video_url: "",
+  editor_notes: "",
+});
+
 const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+const clampGalleryCount = (value: number) => Math.max(1, Math.min(4, value || 1));
+const parseTags = (value: string) => value.split(",").map((tag) => tag.trim()).filter(Boolean);
 
 const safeJson = <T,>(value: string, fallback: T): T => {
   try {
@@ -63,117 +78,84 @@ const safeJson = <T,>(value: string, fallback: T): T => {
   }
 };
 
-const emptyForm = (galleryCount: number): ArticleFormState => ({
-  title: "",
-  intro: "",
-  body: "",
-  heroImage: "",
-  galleryImages: Array.from({ length: galleryCount }, () => ""),
-  audioUrl: "",
-  videoUrl: "",
-});
-
-const clampGalleryCount = (value: number) => Math.max(1, Math.min(4, value || 1));
+const statusLabel: Record<StoryStatus, string> = {
+  draft: "Draft",
+  in_review: "In Review",
+  published: "Published",
+  rejected: "Needs Work",
+};
 
 const ArticlesManager = () => {
   const { toast } = useToast();
-  const { data: content, isLoading } = useSectionContent("articles");
+  const { user, hasRole } = useAuth();
+  const canPublish = hasRole("admin", "editor");
+  const canEditTemplate = hasRole("admin", "editor");
+  const { data: content } = useSectionContent("articles");
+  const { data: stories, isLoading, error } = useCultureStories();
   const createContent = useCreateContent();
   const updateContent = useUpdateContent();
+  const createStory = useCreateCultureStory();
+  const updateStory = useUpdateCultureStory();
+  const deleteStory = useDeleteCultureStory();
+  const logActivity = useLogActivity();
 
   const [sectionTagline, setSectionTagline] = useState("Field Notes");
-  const [sectionTitle, setSectionTitle] = useState("TRANSMISSION ARTICLES");
-  const [sectionDescription, setSectionDescription] = useState(
-    "Long-form signal drops with structured media layouts managed from admin."
-  );
-
+  const [sectionTitle, setSectionTitle] = useState("CULTURE STORIES");
+  const [sectionDescription, setSectionDescription] = useState("Stories, interviews, field notes, photos, audio, and video from the BPM CTRL network.");
   const [template, setTemplate] = useState<ArticleTemplate>(DEFAULT_TEMPLATE);
-  const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<ArticleFormState>(emptyForm(DEFAULT_TEMPLATE.galleryCount));
-
+  const [form, setForm] = useState<StoryFormState>(emptyForm(DEFAULT_TEMPLATE.galleryCount));
   const [heroFile, setHeroFile] = useState<File | null>(null);
-  const [galleryFiles, setGalleryFiles] = useState<Array<File | null>>(
-    Array.from({ length: DEFAULT_TEMPLATE.galleryCount }, () => null)
-  );
+  const [galleryFiles, setGalleryFiles] = useState<Array<File | null>>(Array.from({ length: DEFAULT_TEMPLATE.galleryCount }, () => null));
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-
-  const [savingTemplate, setSavingTemplate] = useState(false);
-  const [savingArticle, setSavingArticle] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!content) return;
-
     setSectionTagline(getContentValue(content, "articles_tagline", "Field Notes"));
-    setSectionTitle(getContentValue(content, "articles_title", "TRANSMISSION ARTICLES"));
-    setSectionDescription(
-      getContentValue(
-        content,
-        "articles_description",
-        "Long-form signal drops with structured media layouts managed from admin."
-      )
-    );
-
-    const parsedTemplate = safeJson<ArticleTemplate>(
-      getContentValue(content, "articles_template", JSON.stringify(DEFAULT_TEMPLATE)),
-      DEFAULT_TEMPLATE
-    );
-
-    setTemplate({
-      ...DEFAULT_TEMPLATE,
-      ...parsedTemplate,
-      galleryCount: clampGalleryCount(parsedTemplate.galleryCount || DEFAULT_TEMPLATE.galleryCount),
-    });
-
-    const parsedItems = safeJson<ArticleItem[]>(getContentValue(content, "articles_items", "[]"), []);
-    setArticles(Array.isArray(parsedItems) ? parsedItems : []);
+    setSectionTitle(getContentValue(content, "articles_title", "CULTURE STORIES"));
+    setSectionDescription(getContentValue(content, "articles_description", "Stories, interviews, field notes, photos, audio, and video from the BPM CTRL network."));
+    const parsedTemplate = safeJson<ArticleTemplate>(getContentValue(content, "articles_template", JSON.stringify(DEFAULT_TEMPLATE)), DEFAULT_TEMPLATE);
+    setTemplate({ ...DEFAULT_TEMPLATE, ...parsedTemplate, galleryCount: clampGalleryCount(parsedTemplate.galleryCount || DEFAULT_TEMPLATE.galleryCount) });
   }, [content]);
 
   useEffect(() => {
-    setForm((previous) => ({
-      ...previous,
-      galleryImages: Array.from({ length: clampGalleryCount(template.galleryCount) }, (_, index) => previous.galleryImages[index] || ""),
+    setForm((current) => ({
+      ...current,
+      gallery_images: Array.from({ length: clampGalleryCount(template.galleryCount) }, (_, index) => current.gallery_images[index] || ""),
     }));
-
-    setGalleryFiles((previous) =>
-      Array.from({ length: clampGalleryCount(template.galleryCount) }, (_, index) => previous[index] || null)
-    );
+    setGalleryFiles((current) => Array.from({ length: clampGalleryCount(template.galleryCount) }, (_, index) => current[index] || null));
   }, [template.galleryCount]);
 
-  const wordStats = useMemo(
-    () => ({
-      title: countWords(form.title),
-      intro: countWords(form.intro),
-      body: countWords(form.body),
-    }),
-    [form.title, form.intro, form.body]
-  );
+  const visibleStories = useMemo(() => {
+    if (!stories) return [];
+    if (canPublish) return stories;
+    return stories.filter((story) => story.author_id === user?.id);
+  }, [canPublish, stories, user?.id]);
+
+  const stats = useMemo(() => ({
+    title: countWords(form.title),
+    intro: countWords(form.intro),
+    body: countWords(form.body),
+  }), [form.body, form.intro, form.title]);
 
   const upsertContentValue = async (key: string, value: string, type: "text" | "json", sortOrder: number) => {
     const existing = content?.find((row) => row.content_key === key);
-
     if (existing) {
       await updateContent.mutateAsync({ id: existing.id, content_value: value, content_type: type, sort_order: sortOrder });
       return;
     }
-
-    await createContent.mutateAsync({
-      section: "articles",
-      content_key: key,
-      content_value: value,
-      content_type: type,
-      sort_order: sortOrder,
-    });
+    await createContent.mutateAsync({ section: "articles", content_key: key, content_value: value, content_type: type, sort_order: sortOrder });
   };
 
   const uploadIfProvided = async (file: File | null, path: string, fallbackUrl: string) => {
-    if (!file) return fallbackUrl;
+    if (!file) return fallbackUrl.trim();
     const { publicUrl } = await uploadAssetFile(file, path);
     return publicUrl;
   };
 
-  const resetArticleForm = () => {
+  const resetForm = () => {
     setEditingId(null);
     setForm(emptyForm(clampGalleryCount(template.galleryCount)));
     setHeroFile(null);
@@ -182,313 +164,205 @@ const ArticlesManager = () => {
     setVideoFile(null);
   };
 
-  const saveSectionAndTemplate = async () => {
-    setSavingTemplate(true);
+  const validateWordCounts = () => {
+    if (stats.title > template.titleMaxWords) return `Title must be ${template.titleMaxWords} words or fewer.`;
+    if (stats.intro > template.introMaxWords) return `Intro must be ${template.introMaxWords} words or fewer.`;
+    if (stats.body > template.bodyMaxWords) return `Body must be ${template.bodyMaxWords} words or fewer.`;
+    return "";
+  };
 
+  const saveTemplate = async () => {
+    if (!canEditTemplate) return;
+    setSaving(true);
     try {
-      const nextTemplate = {
-        ...template,
-        galleryCount: clampGalleryCount(template.galleryCount),
-      };
-
-      setTemplate(nextTemplate);
-
+      const nextTemplate = { ...template, galleryCount: clampGalleryCount(template.galleryCount) };
       await upsertContentValue("articles_template", JSON.stringify(nextTemplate), "json", 0);
       await upsertContentValue("articles_tagline", sectionTagline, "text", 2);
       await upsertContentValue("articles_title", sectionTitle, "text", 3);
       await upsertContentValue("articles_description", sectionDescription, "text", 4);
-
-      toast({ title: "Article template saved" });
+      toast({ title: "Story section saved" });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
     }
-
-    setSavingTemplate(false);
+    setSaving(false);
   };
 
-  const handleSaveArticle = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (wordStats.title > template.titleMaxWords) {
-      toast({ title: "Title too long", description: `Use ${template.titleMaxWords} words or fewer.`, variant: "destructive" });
+  const saveStory = async (nextStatus: StoryStatus) => {
+    const errorMessage = validateWordCounts();
+    if (errorMessage) {
+      toast({ title: "Tighten the copy", description: errorMessage, variant: "destructive" });
       return;
     }
 
-    if (wordStats.intro > template.introMaxWords) {
-      toast({ title: "Intro too long", description: `Use ${template.introMaxWords} words or fewer.`, variant: "destructive" });
-      return;
-    }
-
-    if (wordStats.body > template.bodyMaxWords) {
-      toast({ title: "Body too long", description: `Use ${template.bodyMaxWords} words or fewer.`, variant: "destructive" });
-      return;
-    }
-
-    setSavingArticle(true);
-
+    setSaving(true);
     try {
-      const articleId = editingId || crypto.randomUUID();
-      const existing = articles.find((article) => article.id === editingId);
-      const timestamp = new Date().toISOString();
-
-      const heroImage = await uploadIfProvided(
-        heroFile,
-        `articles/${articleId}/hero-${Date.now()}`,
-        form.heroImage.trim()
-      );
-
-      const audioUrl = await uploadIfProvided(
-        audioFile,
-        `articles/${articleId}/audio-${Date.now()}`,
-        form.audioUrl.trim()
-      );
-
-      const videoUrl = await uploadIfProvided(
-        videoFile,
-        `articles/${articleId}/video-${Date.now()}`,
-        form.videoUrl.trim()
-      );
-
-      const galleryImages = await Promise.all(
-        form.galleryImages.map((url, index) =>
-          uploadIfProvided(
-            galleryFiles[index] || null,
-            `articles/${articleId}/gallery-${index + 1}-${Date.now()}`,
-            url.trim()
-          )
+      const storyId = editingId || crypto.randomUUID();
+      const hero_image = await uploadIfProvided(heroFile, `articles/${storyId}/hero-${Date.now()}`, form.hero_image);
+      const audio_url = await uploadIfProvided(audioFile, `articles/${storyId}/audio-${Date.now()}`, form.audio_url);
+      const video_url = await uploadIfProvided(videoFile, `articles/${storyId}/video-${Date.now()}`, form.video_url);
+      const gallery_images = await Promise.all(
+        form.gallery_images.map((url, index) =>
+          uploadIfProvided(galleryFiles[index] || null, `articles/${storyId}/gallery-${index + 1}-${Date.now()}`, url)
         )
       );
 
-      const nextArticle: ArticleItem = {
-        id: articleId,
+      const payload = {
         title: form.title.trim(),
         intro: form.intro.trim(),
         body: form.body.trim(),
-        heroImage,
-        galleryImages: galleryImages.filter(Boolean).slice(0, clampGalleryCount(template.galleryCount)),
-        audioUrl,
-        videoUrl,
-        publishedAt: existing?.publishedAt || timestamp,
-        updatedAt: timestamp,
+        category: form.category.trim() || "Culture",
+        tags: parseTags(form.tags),
+        hero_image,
+        gallery_images: gallery_images.filter(Boolean),
+        audio_url,
+        video_url,
+        editor_notes: form.editor_notes.trim(),
+        status: nextStatus,
+        published_at: nextStatus === "published" ? new Date().toISOString() : null,
       };
 
-      const nextArticles = editingId
-        ? articles.map((article) => (article.id === editingId ? nextArticle : article))
-        : [nextArticle, ...articles];
-
-      await upsertContentValue("articles_items", JSON.stringify(nextArticles), "json", 1);
-      setArticles(nextArticles);
-
-      toast({ title: editingId ? "Article updated" : "Article created" });
-      resetArticleForm();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    }
-
-    setSavingArticle(false);
-  };
-
-  const handleEditArticle = (article: ArticleItem) => {
-    setEditingId(article.id);
-    setForm({
-      title: article.title,
-      intro: article.intro,
-      body: article.body,
-      heroImage: article.heroImage || "",
-      galleryImages: Array.from(
-        { length: clampGalleryCount(template.galleryCount) },
-        (_, index) => article.galleryImages[index] || ""
-      ),
-      audioUrl: article.audioUrl || "",
-      videoUrl: article.videoUrl || "",
-    });
-
-    setHeroFile(null);
-    setAudioFile(null);
-    setVideoFile(null);
-    setGalleryFiles(Array.from({ length: clampGalleryCount(template.galleryCount) }, () => null));
-  };
-
-  const handleDeleteArticle = async (id: string) => {
-    if (!confirm("Delete this article?")) return;
-
-    try {
-      const nextArticles = articles.filter((article) => article.id !== id);
-      await upsertContentValue("articles_items", JSON.stringify(nextArticles), "json", 1);
-      setArticles(nextArticles);
-      toast({ title: "Article deleted" });
-
-      if (editingId === id) {
-        resetArticleForm();
+      if (editingId) {
+        await updateStory.mutateAsync({ id: editingId, ...payload });
+      } else {
+        await createStory.mutateAsync(payload);
       }
+
+      logActivity.mutate({
+        action: editingId ? "update" : "create",
+        entityType: "culture_story",
+        entityId: editingId || storyId,
+        summary: `${editingId ? "Updated" : "Created"} story "${payload.title}" as ${statusLabel[nextStatus]}`,
+        metadata: { status: nextStatus, category: payload.category },
+      });
+
+      toast({ title: nextStatus === "published" ? "Story published" : nextStatus === "in_review" ? "Story sent for review" : "Draft saved" });
+      resetForm();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
     }
+    setSaving(false);
   };
 
-  if (isLoading) {
-    return <div className="py-8 text-center text-muted-foreground font-body">Loading articles...</div>;
-  }
+  const editStory = (story: CultureStory) => {
+    setEditingId(story.id);
+    setForm({
+      title: story.title,
+      intro: story.intro,
+      body: story.body,
+      category: story.category || "Culture",
+      tags: story.tags.join(", "),
+      hero_image: story.hero_image || "",
+      gallery_images: Array.from({ length: clampGalleryCount(template.galleryCount) }, (_, index) => story.gallery_images[index] || ""),
+      audio_url: story.audio_url || "",
+      video_url: story.video_url || "",
+      editor_notes: story.editor_notes || "",
+    });
+  };
+
+  const removeStory = async (story: CultureStory) => {
+    if (!confirm("Delete this story?")) return;
+    await deleteStory.mutateAsync(story.id);
+    toast({ title: "Story deleted" });
+  };
 
   return (
     <div className="space-y-8">
       <div>
         <h2 className="font-display text-2xl font-black gradient-text-orange flex items-center gap-2">
-          <Newspaper className="w-5 h-5 text-primary" /> ARTICLES
+          <FileText className="w-5 h-5 text-primary" /> EDITORIAL DESK
         </h2>
         <p className="text-muted-foreground text-sm font-body mt-1">
-          Define article typography/media template and publish long-form entries with photos, audio, and video.
+          Onboard writers and creators, collect drafts, review submissions, and publish culture stories from anywhere.
         </p>
       </div>
 
-      <div className="glow-border-orange rounded-2xl bg-card p-6 relative">
-        <div className="scanline absolute inset-0 pointer-events-none opacity-10 rounded-2xl" />
-        <div className="relative z-10 space-y-5">
-          <h3 className="font-display text-sm font-bold text-foreground tracking-wider uppercase">Section & Template</h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Tagline</Label>
-              <Input value={sectionTagline} onChange={(e) => setSectionTagline(e.target.value)} className="mt-1 bg-muted border-border" />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Title</Label>
-              <Input value={sectionTitle} onChange={(e) => setSectionTitle(e.target.value)} className="mt-1 bg-muted border-border" />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Description</Label>
-              <Input value={sectionDescription} onChange={(e) => setSectionDescription(e.target.value)} className="mt-1 bg-muted border-border" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Title Max Words</Label>
-              <Input
-                type="number"
-                value={template.titleMaxWords}
-                onChange={(e) => setTemplate({ ...template, titleMaxWords: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Intro Max Words</Label>
-              <Input
-                type="number"
-                value={template.introMaxWords}
-                onChange={(e) => setTemplate({ ...template, introMaxWords: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Body Max Words</Label>
-              <Input
-                type="number"
-                value={template.bodyMaxWords}
-                onChange={(e) => setTemplate({ ...template, bodyMaxWords: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Gallery Slots</Label>
-              <Input
-                type="number"
-                value={template.galleryCount}
-                onChange={(e) => setTemplate({ ...template, galleryCount: clampGalleryCount(parseInt(e.target.value, 10) || 1) })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Hero Width</Label>
-              <Input
-                type="number"
-                value={template.heroWidth}
-                onChange={(e) => setTemplate({ ...template, heroWidth: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Hero Height</Label>
-              <Input
-                type="number"
-                value={template.heroHeight}
-                onChange={(e) => setTemplate({ ...template, heroHeight: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Gallery Width</Label>
-              <Input
-                type="number"
-                value={template.galleryWidth}
-                onChange={(e) => setTemplate({ ...template, galleryWidth: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Gallery Height</Label>
-              <Input
-                type="number"
-                value={template.galleryHeight}
-                onChange={(e) => setTemplate({ ...template, galleryHeight: parseInt(e.target.value, 10) || 0 })}
-                className="mt-1 bg-muted border-border"
-              />
-            </div>
-          </div>
-
-          <Button variant="neon" onClick={saveSectionAndTemplate} disabled={savingTemplate}>
-            <Save className="w-4 h-4 mr-2" />
-            {savingTemplate ? "Saving..." : "Save Template"}
-          </Button>
+      {error && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-muted-foreground">
+          Story table is not installed yet. Apply the latest Supabase migration to enable role-based story submissions.
         </div>
-      </div>
+      )}
 
-      <div className="glow-border-orange rounded-2xl bg-card p-6 relative">
-        <div className="scanline absolute inset-0 pointer-events-none opacity-10 rounded-2xl" />
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
+      {canEditTemplate && (
+        <div className="liquid-glass rounded-3xl p-6">
+          <div className="liquid-content space-y-5">
+            <h3 className="font-display text-sm font-bold text-foreground tracking-wider uppercase">Public Section & Brief</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Eyebrow</Label>
+                <Input value={sectionTagline} onChange={(event) => setSectionTagline(event.target.value)} className="mt-1 bg-muted border-border" />
+              </div>
+              <div>
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Title</Label>
+                <Input value={sectionTitle} onChange={(event) => setSectionTitle(event.target.value)} className="mt-1 bg-muted border-border" />
+              </div>
+              <div>
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Description</Label>
+                <Input value={sectionDescription} onChange={(event) => setSectionDescription(event.target.value)} className="mt-1 bg-muted border-border" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                ["Title Max Words", "titleMaxWords"],
+                ["Intro Max Words", "introMaxWords"],
+                ["Body Max Words", "bodyMaxWords"],
+                ["Gallery Slots", "galleryCount"],
+              ].map(([label, key]) => (
+                <div key={key}>
+                  <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">{label}</Label>
+                  <Input
+                    type="number"
+                    value={(template as any)[key]}
+                    onChange={(event) => setTemplate({ ...template, [key]: parseInt(event.target.value, 10) || 0 })}
+                    className="mt-1 bg-muted border-border"
+                  />
+                </div>
+              ))}
+            </div>
+            <Button variant="neon" onClick={saveTemplate} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? "Saving..." : "Save Brief"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="liquid-glass rounded-3xl p-6">
+        <div className="liquid-content">
+          <div className="mb-5 flex items-center justify-between gap-4">
             <h3 className="font-display text-sm font-bold text-foreground tracking-wider uppercase">
-              {editingId ? "Edit Article" : "New Article"}
+              {editingId ? "Edit Story" : "New Story"}
             </h3>
-            <Button variant="portal" onClick={resetArticleForm}>
+            <Button variant="portal" type="button" onClick={resetForm}>
               <Plus className="w-4 h-4 mr-2" /> New Draft
             </Button>
           </div>
 
-          <form onSubmit={handleSaveArticle} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Title</Label>
-              <Input
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="mt-1 bg-muted border-border"
-                required
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">{wordStats.title}/{template.titleMaxWords} words</p>
+              <Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="mt-1 bg-muted border-border" />
+              <p className="mt-1 text-[11px] text-muted-foreground">{stats.title}/{template.titleMaxWords} words</p>
             </div>
-
             <div>
               <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Intro</Label>
-              <Textarea
-                value={form.intro}
-                onChange={(e) => setForm({ ...form, intro: e.target.value })}
-                className="mt-1 bg-muted border-border"
-                rows={3}
-                required
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">{wordStats.intro}/{template.introMaxWords} words</p>
+              <Textarea value={form.intro} onChange={(event) => setForm({ ...form, intro: event.target.value })} className="mt-1 bg-muted border-border" rows={3} />
+              <p className="mt-1 text-[11px] text-muted-foreground">{stats.intro}/{template.introMaxWords} words</p>
+            </div>
+            <div>
+              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Story</Label>
+              <Textarea value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} className="mt-1 bg-muted border-border" rows={9} />
+              <p className="mt-1 text-[11px] text-muted-foreground">{stats.body}/{template.bodyMaxWords} words</p>
             </div>
 
-            <div>
-              <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Main Content</Label>
-              <Textarea
-                value={form.body}
-                onChange={(e) => setForm({ ...form, body: e.target.value })}
-                className="mt-1 bg-muted border-border"
-                rows={8}
-                required
-              />
-              <p className="mt-1 text-[11px] text-muted-foreground">{wordStats.body}/{template.bodyMaxWords} words</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Category</Label>
+                <Input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} className="mt-1 bg-muted border-border" />
+              </div>
+              <div>
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Tags</Label>
+                <Input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} className="mt-1 bg-muted border-border" placeholder="Lagos, fashion, dance" />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -496,67 +370,53 @@ const ArticlesManager = () => {
                 <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase flex items-center gap-2">
                   <ImageIcon className="w-3.5 h-3.5" /> Hero Image URL
                 </Label>
-                <Input
-                  value={form.heroImage}
-                  onChange={(e) => setForm({ ...form, heroImage: e.target.value })}
-                  className="mt-1 bg-muted border-border"
-                  placeholder="https://..."
-                />
+                <Input value={form.hero_image} onChange={(event) => setForm({ ...form, hero_image: event.target.value })} className="mt-1 bg-muted border-border" />
                 <label className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted hover:bg-muted/80 cursor-pointer transition-colors">
                   <Upload className="w-4 h-4 text-primary" />
                   <span className="text-xs font-body text-foreground">{heroFile ? heroFile.name : "Upload hero image"}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setHeroFile(e.target.files?.[0] || null)} />
+                  <input type="file" accept="image/*" className="hidden" onChange={(event) => setHeroFile(event.target.files?.[0] || null)} />
                 </label>
-                <p className="mt-1 text-[11px] text-muted-foreground">Preferred size: {template.heroWidth}×{template.heroHeight}px</p>
               </div>
-
               <div>
                 <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase flex items-center gap-2">
                   <Music className="w-3.5 h-3.5" /> Audio URL
                 </Label>
-                <Input
-                  value={form.audioUrl}
-                  onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
-                  className="mt-1 bg-muted border-border"
-                  placeholder="https://..."
-                />
+                <Input value={form.audio_url} onChange={(event) => setForm({ ...form, audio_url: event.target.value })} className="mt-1 bg-muted border-border" />
                 <label className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted hover:bg-muted/80 cursor-pointer transition-colors">
                   <Upload className="w-4 h-4 text-primary" />
                   <span className="text-xs font-body text-foreground">{audioFile ? audioFile.name : "Upload audio"}</span>
-                  <input type="file" accept="audio/*" className="hidden" onChange={(e) => setAudioFile(e.target.files?.[0] || null)} />
+                  <input type="file" accept="audio/*" className="hidden" onChange={(event) => setAudioFile(event.target.files?.[0] || null)} />
                 </label>
               </div>
             </div>
 
             <div>
               <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase flex items-center gap-2 mb-2">
-                <ImageIcon className="w-3.5 h-3.5" /> Gallery Images ({template.galleryCount} slots)
+                <ImageIcon className="w-3.5 h-3.5" /> Gallery
               </Label>
               <div className="space-y-3">
-                {form.galleryImages.map((imageUrl, index) => (
-                  <div key={`gallery-slot-${index}`} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
+                {form.gallery_images.map((imageUrl, index) => (
+                  <div key={`gallery-${index}`} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
                     <Input
                       value={imageUrl}
-                      onChange={(e) => {
-                        const next = [...form.galleryImages];
-                        next[index] = e.target.value;
-                        setForm({ ...form, galleryImages: next });
+                      onChange={(event) => {
+                        const next = [...form.gallery_images];
+                        next[index] = event.target.value;
+                        setForm({ ...form, gallery_images: next });
                       }}
                       className="bg-muted border-border"
                       placeholder={`Gallery image ${index + 1} URL`}
                     />
                     <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted hover:bg-muted/80 cursor-pointer transition-colors">
                       <Upload className="w-4 h-4 text-primary" />
-                      <span className="text-xs font-body text-foreground whitespace-nowrap">
-                        {galleryFiles[index] ? galleryFiles[index]?.name : `Upload slot ${index + 1}`}
-                      </span>
+                      <span className="text-xs font-body text-foreground whitespace-nowrap">{galleryFiles[index]?.name || `Upload ${index + 1}`}</span>
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => {
+                        onChange={(event) => {
                           const next = [...galleryFiles];
-                          next[index] = e.target.files?.[0] || null;
+                          next[index] = event.target.files?.[0] || null;
                           setGalleryFiles(next);
                         }}
                       />
@@ -564,71 +424,73 @@ const ArticlesManager = () => {
                   </div>
                 ))}
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">Preferred size per image: {template.galleryWidth}×{template.galleryHeight}px</p>
             </div>
 
             <div>
               <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase flex items-center gap-2">
-                <Video className="w-3.5 h-3.5" /> Video URL / Embed URL
+                <Video className="w-3.5 h-3.5" /> Video URL
               </Label>
-              <Input
-                value={form.videoUrl}
-                onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
-                className="mt-1 bg-muted border-border"
-                placeholder="https://youtube.com/watch?v=..."
-              />
+              <Input value={form.video_url} onChange={(event) => setForm({ ...form, video_url: event.target.value })} className="mt-1 bg-muted border-border" />
               <label className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted hover:bg-muted/80 cursor-pointer transition-colors">
                 <Upload className="w-4 h-4 text-primary" />
                 <span className="text-xs font-body text-foreground">{videoFile ? videoFile.name : "Upload video"}</span>
-                <input type="file" accept="video/*" className="hidden" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} />
+                <input type="file" accept="video/*" className="hidden" onChange={(event) => setVideoFile(event.target.files?.[0] || null)} />
               </label>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="neon" type="submit" disabled={savingArticle}>
+            {canPublish && (
+              <div>
+                <Label className="font-display text-xs tracking-wider text-muted-foreground uppercase">Editor Notes</Label>
+                <Textarea value={form.editor_notes} onChange={(event) => setForm({ ...form, editor_notes: event.target.value })} className="mt-1 bg-muted border-border" rows={3} />
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button variant="portal" type="button" disabled={saving} onClick={() => saveStory("draft")}>
                 <Save className="w-4 h-4 mr-2" />
-                {savingArticle ? "Saving..." : editingId ? "Update Article" : "Publish Article"}
+                Save Draft
               </Button>
-              {editingId && (
-                <Button variant="portal" type="button" onClick={resetArticleForm}>
-                  Cancel Edit
-                </Button>
-              )}
+              <Button variant="neon" type="button" disabled={saving} onClick={() => saveStory(canPublish ? "published" : "in_review")}>
+                {canPublish ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                {canPublish ? "Publish" : "Send for Review"}
+              </Button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-display text-sm font-bold text-foreground tracking-wider uppercase">Published Articles</h3>
-
-        {articles.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground font-body">
-            No articles yet — create the first transmission article above.
-          </div>
+        <h3 className="font-display text-sm font-bold text-foreground tracking-wider uppercase">
+          {canPublish ? "All Stories" : "My Stories"}
+        </h3>
+        {isLoading ? (
+          <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">Loading stories...</div>
+        ) : visibleStories.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">No stories yet.</div>
         ) : (
-          articles.map((article) => (
-            <div key={article.id} className="rounded-xl border border-border bg-card p-4 md:p-5">
+          visibleStories.map((story) => (
+            <div key={story.id} className="rounded-2xl border border-border bg-card/70 p-4 md:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h4 className="font-display text-base text-foreground">{article.title}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{article.intro}</p>
-                  <p className="text-[11px] text-muted-foreground mt-2">
-                    Updated {new Date(article.updatedAt || article.publishedAt).toLocaleDateString()}
-                  </p>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-primary/25 px-2 py-1 font-display text-[10px] uppercase tracking-wider text-primary">
+                      {statusLabel[story.status]}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">{story.author_name || story.author_email}</span>
+                  </div>
+                  <h4 className="font-display text-base text-foreground">{story.title}</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">{story.intro}</p>
+                  {story.editor_notes && <p className="mt-2 text-xs text-primary">Editor note: {story.editor_notes}</p>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => handleEditArticle(article)}>
+                  <Button variant="ghost" size="icon" onClick={() => editStory(story)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteArticle(article.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {(canPublish || story.status !== "published") && (
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => removeStory(story)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

@@ -38,6 +38,91 @@ export interface ShopOrder {
   created_at: string;
 }
 
+export interface ShopProduct {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  currency: string;
+  image_url: string;
+  status: string;
+  stock_quantity: number;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export const usePublicShopProducts = () =>
+  useQuery({
+    queryKey: ["shop-products", "public"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("shop_products")
+        .select("*")
+        .eq("status", "published")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as ShopProduct[];
+    },
+    retry: false,
+  });
+
+export const useAllShopProducts = () =>
+  useQuery({
+    queryKey: ["shop-products", "admin"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("shop_products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as ShopProduct[];
+    },
+    retry: false,
+  });
+
+export const useSaveShopProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (product: Partial<ShopProduct> & { id?: string }) => {
+      const payload = {
+        ...product,
+        price: Number(product.price || 0),
+        stock_quantity: Number(product.stock_quantity || 0),
+        updated_at: new Date().toISOString(),
+      };
+
+      if (product.id) {
+        const { id, ...updates } = payload;
+        const { error } = await (supabase as any).from("shop_products").update(updates).eq("id", id);
+        if (error) throw error;
+        return;
+      }
+
+      const { error } = await (supabase as any).from("shop_products").insert(payload);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["shop-products"] }),
+  });
+};
+
+export const useDeleteShopProduct = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from("shop_products").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["shop-products"] }),
+  });
+};
+
 export const useShopCustomer = () => {
   const { user } = useAuth();
 

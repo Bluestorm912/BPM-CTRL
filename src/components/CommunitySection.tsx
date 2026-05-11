@@ -14,15 +14,20 @@ const getFreshContentValue = (content: Parameters<typeof getContentValue>[0], ke
 const CommunitySection = () => {
   const { data: content } = useSectionContent("community");
 
-  const title1 = getFreshContentValue(content, "community_title_1", "Designed for the room.", ["We don't just throw raves."]);
-  const title2 = getFreshContentValue(content, "community_title_2", "Built for the culture.", ["We build culture."]);
-  const body1 = getFreshContentValue(content, "community_body_1", "BPM CTRL is a Nigerian-born signal for Afro house, underground movement, and fashion-led nightlife.", [
+  const title1 = getFreshContentValue(content, "community_title_1", "A platform for the culture.", ["We don't just throw raves.", "Designed for the room."]);
+  const title2 = getFreshContentValue(content, "community_title_2", "Built by the community.", ["We build culture.", "Built for the culture."]);
+  const body1 = getFreshContentValue(content, "community_body_1", "BPM CTRL is a community-led media and radio project documenting music, nightlife, fashion, movement, and the people shaping the scene.", [
     "BPM CTRL is a Nigerian-born movement rooted in Afro house, underground dance energy, and fashion expression. We transmit a signal that connects those who move to the same frequency.",
+    "BPM CTRL is a Nigerian-born signal for Afro house, underground movement, and fashion-led nightlife.",
   ]);
-  const body2 = getFreshContentValue(content, "community_body_2", "The app keeps the circle close: radio, playlists, drops, support, and archive in one black-glass space.", [
-    "Dance is spiritual release. Fashion is personal expression. Together they form the language of our community — a space where every body belongs and the bass hits different.",
+  const body2 = getFreshContentValue(content, "community_body_2", "Writers, DJs, photographers, designers, volunteers, interns, supporters, and organizers can contribute from anywhere in the world.", [
+    "Dance is spiritual release. Fashion is personal expression. Together they form the language of our community - a space where every body belongs and the bass hits different.",
+    "The app keeps the circle close: radio, playlists, drops, support, and archive in one black-glass space.",
   ]);
-  const body3 = getFreshContentValue(content, "community_body_3", "No noise. No clutter. Just signal.", ["No hierarchy. No ego. Just pulse."]);
+  const body3 = getFreshContentValue(content, "community_body_3", "Submit your story, send your set, join the team, or fund the cause. The signal grows when the community builds it.", [
+    "No hierarchy. No ego. Just pulse.",
+    "No noise. No clutter. Just signal.",
+  ]);
 
   return (
     <section id="mission" className="py-24 px-4 relative overflow-hidden">
@@ -46,10 +51,9 @@ const CommunitySection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="glow-border-orange rounded-2xl p-8 md:p-14 relative"
+          className="liquid-glass rounded-3xl p-8 md:p-14 relative"
         >
-          <div className="absolute inset-0 scanline pointer-events-none opacity-20 rounded-2xl" />
-          <div className="relative z-10">
+          <div className="liquid-content">
             <h2 className="font-display text-2xl md:text-4xl font-black text-foreground mb-8 text-glow-orange leading-tight">
               {title1}
               <br />
@@ -64,9 +68,9 @@ const CommunitySection = () => {
 
             <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { img: iconSpeaker, text: "Afro House" },
-                { img: iconDancer, text: "Movement" },
-                { img: iconFashion, text: "Style" },
+                { img: iconSpeaker, text: "Radio" },
+                { img: iconDancer, text: "DJ Sets" },
+                { img: iconFashion, text: "Stories" },
                 { img: iconCommunity, text: "Community" },
               ].map((item) => (
                 <div key={item.text} className="glass-panel text-center py-4 px-2 rounded-lg">

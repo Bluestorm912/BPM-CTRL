@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { useEnsureShopCustomer, useSaveShopAddress, useShopAddresses, useShopCustomer, useShopOrders } from "@/hooks/useShop";
+import { useEnsureShopCustomer, usePublicShopProducts, useSaveShopAddress, useShopAddresses, useShopCustomer, useShopOrders } from "@/hooks/useShop";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { useLanguage } from "@/i18n/LanguageProvider";
 
@@ -48,6 +48,7 @@ const Shop = () => {
   const { data: customer } = useShopCustomer();
   const { data: addresses = [] } = useShopAddresses();
   const { data: orders = [] } = useShopOrders();
+  const { data: backendProducts = [] } = usePublicShopProducts();
 
   usePageMeta(t("meta.shopTitle"), t("meta.shopDescription"));
 
@@ -66,9 +67,22 @@ const Shop = () => {
     }));
   }, [user, customer]);
 
+  const sourceProducts = backendProducts.length
+    ? backendProducts.map((product) => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: `${product.currency} ${product.price.toLocaleString()}`,
+        image: product.image_url || heroBg,
+        status: product.status === "published" ? "New" : product.status,
+        gated: product.status === "members",
+        description: product.description,
+      }))
+    : PRODUCTS;
+
   const products = useMemo(
-    () => PRODUCTS.filter((product) => category === "All" || product.category === category),
-    [category]
+    () => sourceProducts.filter((product) => category === "All" || product.category === category),
+    [category, sourceProducts]
   );
 
   const handleAuth = async (event: React.FormEvent) => {
@@ -187,7 +201,7 @@ const Shop = () => {
                   <p className="font-display text-[10px] tracking-[0.24em] text-primary uppercase mb-2">{product.category}</p>
                   <h2 className="font-display text-xl font-black text-foreground mb-2">{product.name}</h2>
                   <p className="text-sm text-muted-foreground font-body mb-5">
-                    {t("shop.productBody")}
+                    {product.description || t("shop.productBody")}
                   </p>
                   <div className="mt-auto flex items-center justify-between gap-3">
                     <span className="font-display text-lg text-foreground">{product.price}</span>

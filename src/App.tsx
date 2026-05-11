@@ -16,6 +16,8 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const Radio = lazy(() => import("./pages/Radio"));
 const Shop = lazy(() => import("./pages/Shop"));
 const Supporters = lazy(() => import("./pages/Supporters"));
+const Careers = lazy(() => import("./pages/Careers"));
+const SubmitSet = lazy(() => import("./pages/SubmitSet"));
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const AppRoutes = () => {
         <Route path="/radio" element={<Radio />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/supporters" element={<Supporters />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/submit-set" element={<SubmitSet />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -9,9 +9,8 @@ const navLinks = [
   { href: "/", key: "nav.home" },
   { href: "/radio", key: "nav.radio" },
   { href: "/shop", key: "nav.shop" },
-  { href: "/supporters", key: "nav.members" },
+  { href: "/careers", key: "nav.join" },
   { href: "/#transmissions", key: "nav.archive" },
-  { href: "/#mission", key: "nav.mission" },
 ];
 
 const Navbar = () => {

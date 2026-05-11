@@ -5,7 +5,7 @@ const actions = [
   { href: "/", key: "nav.home", icon: Home },
   { href: "/radio", key: "nav.play", icon: Headphones },
   { href: "/shop", key: "nav.shop", icon: ShoppingBag },
-  { href: "/supporters", key: "nav.members", icon: Users },
+  { href: "/careers", key: "nav.join", icon: Users },
 ];
 
 const LiquidActionBar = () => {

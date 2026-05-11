@@ -12,6 +12,7 @@ export const dictionaries = {
       radio: "Radio",
       shop: "Shop",
       members: "Members",
+      join: "Join",
       archive: "Archive",
       mission: "Mission",
       play: "Play",
@@ -43,7 +44,7 @@ export const dictionaries = {
     hero: {
       badge: "BPM CTRL is live",
       title: "BPM CONTROL",
-      body: "A black-glass app for radio, playlists, drops, and the people moving the signal forward.",
+      body: "A community-led media and radio platform for music, stories, DJ sets, drops, and the people moving culture forward.",
       join: "Join Members",
       stats: {
         radio: "Radio",
@@ -62,17 +63,17 @@ export const dictionaries = {
       skip: "Skip to content",
       liveConsole: "Live Console",
       playFirst: "Press Play First",
-      playFirstBody: "Start with one player. Keep it moving while you browse radio, drops, members, and the archive.",
+      playFirstBody: "Start with one player. Keep it moving while you browse radio, culture stories, DJ sets, drops, and ways to join the community.",
       latest: "Latest Transmission",
       archiveTitle: "Signal Archive",
-      archiveBody: "Sets, playlists, notes, and cultural drops stay inside BPM CTRL.",
+      archiveBody: "Stories, DJ sets, playlists, notes, and cultural drops stay inside BPM CTRL.",
       tiles: {
         radio: "Live Radio",
         radioText: "stream inside the app",
         playlists: "Playlists",
         playlistsText: "music rooms",
         members: "Members",
-        membersText: "support the signal",
+      membersText: "join or support",
         shop: "Shop",
         shopText: "drops and access",
       },
@@ -110,7 +111,7 @@ export const dictionaries = {
     supportCta: {
       eyebrow: "Member Circle",
       title: "Build The Signal With Us",
-      body: "Members keep BPM CTRL independent: radio, playlists, drops, events, and the platform holding it together.",
+      body: "Members keep BPM CTRL independent: radio, editorial work, DJ submissions, events, and the platform holding it together.",
       action: "Become a Member",
     },
     shop: {
@@ -159,7 +160,7 @@ export const dictionaries = {
     supporters: {
       badge: "Mission Support Channel",
       title: "Support BPM CTRL",
-      body: "Help keep the live signal independent. Supporters fund programming, creators, events, and the platform.",
+      body: "Help keep this community-led culture platform independent. Supporters fund radio, writers, DJs, creators, events, and the tools that hold the network together.",
       join: "Join Supporters",
       fundEyebrow: "What You Fund",
       fundTitle: "The Signal Needs Crew",
@@ -192,6 +193,7 @@ export const dictionaries = {
       radio: "Radio",
       shop: "Shop",
       members: "Members",
+      join: "Join",
       archive: "Archive",
       mission: "Mission",
       play: "Play",

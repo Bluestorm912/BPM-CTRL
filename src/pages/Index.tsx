@@ -105,7 +105,7 @@ const Index = () => {
           <nav className="flex flex-wrap items-center justify-center gap-4 font-display text-xs tracking-wider uppercase text-muted-foreground">
             <a href="/radio" className="hover:text-primary">{t("nav.radio")}</a>
             <a href="/shop" className="hover:text-primary">{t("nav.shop")}</a>
-            <a href="/supporters" className="hover:text-primary">{t("nav.members")}</a>
+            <a href="/careers" className="hover:text-primary">{t("nav.join")}</a>
             <a href={links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-primary">Instagram</a>
           </nav>
         </div>
