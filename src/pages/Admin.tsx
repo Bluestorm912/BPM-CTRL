@@ -8,12 +8,15 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Plus, Edit, Eye, EyeOff, LogOut, Upload, ArrowLeft, FileText, Image as ImageIcon, Link2, Music, Video, Radio, Newspaper } from "lucide-react";
+import { Trash2, Plus, Edit, Eye, EyeOff, LogOut, Upload, ArrowLeft, FileText, Image as ImageIcon, Link2, Music, Video, Radio, Newspaper, Database, AlertTriangle, Copy, BarChart3, ListChecks } from "lucide-react";
 import type { SiteAsset } from "@/hooks/useSiteAssets";
-import ContentManager from "@/components/admin/ContentManager";
+import EasyContentManager from "@/components/admin/EasyContentManager";
 import LinksManager from "@/components/admin/LinksManager";
 import TransmissionCenter from "@/components/admin/TransmissionCenter";
 import ArticlesManager from "@/components/admin/ArticlesManager";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import ActivityLog from "@/components/admin/ActivityLog";
+import { useLogActivity } from "@/hooks/useActivityLog";
 
 const SECTIONS = ["hero", "event", "broadcast", "style", "archive", "articles", "community", "gamification", "general"];
 
@@ -32,6 +35,34 @@ const FILE_ACCEPTS: Record<string, string> = {
   icon: "image/*",
   illustration: "image/*",
 };
+
+const CMSSetupNotice = ({ message }: { message?: string }) => (
+  <div className="glow-border-orange rounded-2xl bg-card p-6 md:p-8 relative overflow-hidden">
+    <div className="scanline absolute inset-0 pointer-events-none opacity-10 rounded-2xl" />
+    <div className="relative z-10 flex flex-col md:flex-row gap-5">
+      <div className="w-12 h-12 rounded-xl border border-primary/25 bg-primary/10 flex items-center justify-center shrink-0">
+        <Database className="w-5 h-5 text-primary" />
+      </div>
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle className="w-4 h-4 text-primary" />
+          <p className="font-display text-xs tracking-[0.22em] text-primary uppercase">CMS setup required</p>
+        </div>
+        <h2 className="font-display text-2xl font-black text-foreground mb-2">Connect the content database</h2>
+        <p className="text-sm text-muted-foreground font-body max-w-2xl">
+          The admin interface is ready, but this Supabase project is missing the BPM CTRL CMS tables. Apply
+          <span className="text-foreground"> supabase/migrations/20260505195000_bpmctrl_fresh_project_foundation.sql </span>
+          to enable content editing, asset uploads, articles, radio, and admin roles.
+        </p>
+        {message && (
+          <p className="mt-4 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground font-mono">
+            {message}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+);
 
 const assetPreview = (asset: SiteAsset) => {
   if (asset.asset_type === "audio") {
@@ -55,10 +86,11 @@ const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { data: assets, isLoading: assetsLoading } = useAllSiteAssets();
+  const { data: assets, isLoading: assetsLoading, error: assetsError } = useAllSiteAssets();
   const createAsset = useCreateAsset();
   const updateAsset = useUpdateAsset();
   const deleteAsset = useDeleteAsset();
+  const logActivity = useLogActivity();
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -73,10 +105,27 @@ const Admin = () => {
     }
   }, [loading, user, isAdmin, navigate]);
 
-  if (loading || assetsLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-2 h-2 rounded-full bg-primary animate-pulse-glow" />
+        <div className="text-center">
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse-glow mx-auto mb-4" />
+          <p className="font-display text-xs tracking-[0.22em] text-primary uppercase">Checking access</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="glow-border-orange rounded-2xl bg-card p-8 text-center max-w-md">
+          <h1 className="font-display text-2xl font-black gradient-text-orange mb-2">Access Required</h1>
+          <p className="text-sm text-muted-foreground font-body mb-5">
+            Sign in with an approved BPM CTRL admin account to manage the website.
+          </p>
+          <Button variant="neon" onClick={() => navigate("/admin/login")}>Go to Login</Button>
+        </div>
       </div>
     );
   }
@@ -96,6 +145,13 @@ const Admin = () => {
           updates = { ...updates, storage_path: externalUrl, public_url: externalUrl };
         }
         await updateAsset.mutateAsync(updates as any);
+        logActivity.mutate({
+          action: "update",
+          entityType: "asset",
+          entityId: editId,
+          summary: `Updated media asset "${form.name}"`,
+          metadata: { section: form.section, type: form.asset_type },
+        });
         toast({ title: "Asset updated" });
       } else {
         if (!file && !externalUrl) {
@@ -111,7 +167,14 @@ const Admin = () => {
           storagePath = result.storagePath;
           publicUrl = result.publicUrl;
         }
-        await createAsset.mutateAsync({ ...form, storage_path: storagePath, public_url: publicUrl });
+        const created = await createAsset.mutateAsync({ ...form, storage_path: storagePath, public_url: publicUrl });
+        logActivity.mutate({
+          action: "create",
+          entityType: "asset",
+          entityId: created?.id,
+          summary: `Uploaded media asset "${form.name}"`,
+          metadata: { section: form.section, type: form.asset_type },
+        });
         toast({ title: "Asset created" });
       }
       resetForm();
@@ -140,13 +203,52 @@ const Admin = () => {
 
   const toggleActive = async (asset: SiteAsset) => {
     await updateAsset.mutateAsync({ id: asset.id, is_active: !asset.is_active });
+    logActivity.mutate({
+      action: asset.is_active ? "hide" : "publish",
+      entityType: "asset",
+      entityId: asset.id,
+      summary: `${asset.is_active ? "Hid" : "Published"} media asset "${asset.name}"`,
+      metadata: { section: asset.section, type: asset.asset_type },
+    });
     toast({ title: asset.is_active ? "Asset hidden" : "Asset visible" });
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this asset permanently?")) return;
+    const asset = (assets || []).find((item) => item.id === id);
     await deleteAsset.mutateAsync(id);
+    logActivity.mutate({
+      action: "delete",
+      entityType: "asset",
+      entityId: id,
+      summary: `Deleted media asset "${asset?.name || id}"`,
+      metadata: { section: asset?.section, type: asset?.asset_type },
+    });
     toast({ title: "Asset deleted" });
+  };
+
+  const cloneAsset = async (asset: SiteAsset) => {
+    const cloned = await createAsset.mutateAsync({
+      name: `${asset.name} Copy`,
+      description: asset.description,
+      section: asset.section,
+      asset_type: asset.asset_type,
+      storage_path: asset.storage_path,
+      public_url: asset.public_url,
+      sort_order: asset.sort_order + 1,
+      is_active: false,
+      metadata: asset.metadata,
+    } as any);
+
+    logActivity.mutate({
+      action: "clone",
+      entityType: "asset",
+      entityId: cloned?.id,
+      summary: `Cloned media asset "${asset.name}"`,
+      metadata: { sourceId: asset.id, section: asset.section, type: asset.asset_type },
+    });
+
+    toast({ title: "Asset cloned", description: "The cloned asset is hidden until you publish it." });
   };
 
   return (
@@ -163,7 +265,7 @@ const Admin = () => {
                 BPM<span className="text-primary"> CTRL</span>
               </span>
             </div>
-            <span className="text-xs font-display tracking-wider text-muted-foreground uppercase">/ Admin Panel</span>
+            <span className="text-xs font-display tracking-wider text-muted-foreground uppercase">/ CMS</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground font-body">{user?.email}</span>
@@ -175,10 +277,18 @@ const Admin = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <p className="font-display text-xs tracking-[0.28em] text-primary uppercase mb-2">BPM CTRL Content Management</p>
+          <h1 className="font-display text-3xl md:text-5xl font-black gradient-text-orange">CMS DASHBOARD</h1>
+          <p className="text-sm text-muted-foreground font-body mt-2 max-w-2xl">
+            Manage website copy, media, ticket links, articles, and radio broadcasts from one branded publishing workspace.
+          </p>
+        </div>
+
         <Tabs defaultValue="content" className="w-full">
-          <TabsList className="bg-muted mb-8 flex-wrap">
+          <TabsList className="bg-muted mb-8 flex-wrap h-auto p-1">
             <TabsTrigger value="content" className="font-display text-xs tracking-wider gap-2">
-              <FileText className="w-3.5 h-3.5" /> Content
+              <FileText className="w-3.5 h-3.5" /> Frontend
             </TabsTrigger>
             <TabsTrigger value="assets" className="font-display text-xs tracking-wider gap-2">
               <ImageIcon className="w-3.5 h-3.5" /> Assets
@@ -192,10 +302,16 @@ const Admin = () => {
             <TabsTrigger value="articles" className="font-display text-xs tracking-wider gap-2">
               <Newspaper className="w-3.5 h-3.5" /> Articles
             </TabsTrigger>
+            <TabsTrigger value="analytics" className="font-display text-xs tracking-wider gap-2">
+              <BarChart3 className="w-3.5 h-3.5" /> Analytics
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="font-display text-xs tracking-wider gap-2">
+              <ListChecks className="w-3.5 h-3.5" /> Activity
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="content">
-            <ContentManager />
+            <EasyContentManager />
           </TabsContent>
 
           <TabsContent value="links">
@@ -210,11 +326,23 @@ const Admin = () => {
             <ArticlesManager />
           </TabsContent>
 
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <ActivityLog />
+          </TabsContent>
+
           <TabsContent value="assets">
+            {assetsError ? (
+              <CMSSetupNotice message={(assetsError as Error).message} />
+            ) : (
+            <>
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="font-display text-2xl font-black gradient-text-orange">ASSET CONTROL</h2>
-                <p className="text-muted-foreground text-sm font-body mt-1">Manage photos, audio, video, and assets across the site</p>
+                <h2 className="font-display text-2xl font-black gradient-text-orange">MEDIA LIBRARY</h2>
+                <p className="text-muted-foreground text-sm font-body mt-1">Upload and organize images, audio, video, and visual assets used across the website.</p>
               </div>
               <Button variant="neon" onClick={() => { resetForm(); setShowForm(true); }}>
                 <Plus className="w-4 h-4 mr-2" /> Add Asset
@@ -321,6 +449,7 @@ const Admin = () => {
                           <TableHead className="font-display text-xs tracking-wider text-muted-foreground">Name</TableHead>
                           <TableHead className="font-display text-xs tracking-wider text-muted-foreground">Section</TableHead>
                           <TableHead className="font-display text-xs tracking-wider text-muted-foreground">Type</TableHead>
+                          <TableHead className="font-display text-xs tracking-wider text-muted-foreground">Uploaded</TableHead>
                           <TableHead className="font-display text-xs tracking-wider text-muted-foreground">Status</TableHead>
                           <TableHead className="font-display text-xs tracking-wider text-muted-foreground text-right">Actions</TableHead>
                         </TableRow>
@@ -338,6 +467,9 @@ const Admin = () => {
                                 </span>
                               </TableCell>
                               <TableCell className="text-xs font-body text-muted-foreground">{asset.asset_type}</TableCell>
+                              <TableCell className="text-xs font-body text-muted-foreground">
+                                {new Date(asset.created_at).toLocaleDateString()}
+                              </TableCell>
                               <TableCell>
                                 <span className={`w-2 h-2 rounded-full inline-block ${asset.is_active ? "bg-primary" : "bg-muted-foreground"}`} />
                               </TableCell>
@@ -349,6 +481,9 @@ const Admin = () => {
                                   <Button variant="ghost" size="icon" onClick={() => startEdit(asset)}>
                                     <Edit className="w-4 h-4" />
                                   </Button>
+                                  <Button variant="ghost" size="icon" onClick={() => cloneAsset(asset)} title="Clone asset">
+                                    <Copy className="w-4 h-4" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" onClick={() => handleDelete(asset.id)} className="text-destructive hover:text-destructive">
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -358,8 +493,8 @@ const Admin = () => {
                           ))}
                         {(assets || []).filter((a) => tab === "all" || a.section === tab).length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground py-8 font-body">
-                              No assets in this section yet
+                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8 font-body">
+                              {assetsLoading ? "Loading media..." : "No media has been added to this section yet."}
                             </TableCell>
                           </TableRow>
                         )}
@@ -369,6 +504,8 @@ const Admin = () => {
                 </TabsContent>
               ))}
             </Tabs>
+            </>
+            )}
           </TabsContent>
         </Tabs>
       </main>

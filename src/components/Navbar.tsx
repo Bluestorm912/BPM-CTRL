@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Menu, X, Instagram, Twitter, Music } from "lucide-react";
+import { Radio, Menu, X, Instagram, Twitter, Music } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useSiteLinks } from "@/hooks/useSiteLinks";
 
 const NAV_LINKS = [
-  { href: "#event", label: "Event" },
-  { href: "#broadcast", label: "Broadcast" },
-  { href: "#style", label: "Style" },
-  { href: "#archive", label: "Archive" },
-  { href: "#articles", label: "Articles" },
-  { href: "#mission", label: "Mission" },
-  { href: "#signal", label: "Signal" },
+  { href: "/", label: "Home" },
+  { href: "/radio", label: "Radio" },
+  { href: "/shop", label: "Shop" },
+  { href: "/supporters", label: "Supporters" },
+  { href: "/#transmissions", label: "Archive" },
+  { href: "/#mission", label: "Mission" },
 ];
 
 const Navbar = () => {
@@ -28,7 +27,7 @@ const Navbar = () => {
       aria-label="Main navigation"
     >
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2">
           <img src={logo} alt="BPM CTRL" className="h-8 w-auto" />
         </a>
 
@@ -53,9 +52,9 @@ const Navbar = () => {
             </a>
           </div>
 
-          <a href="#signal" className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-primary/30 text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
-            <Zap className="w-3 h-3" />
-            Join
+          <a href="/radio" className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-primary/30 text-primary text-xs font-display tracking-wider hover:bg-primary/10 transition-colors">
+            <Radio className="w-3 h-3" />
+            Listen
           </a>
 
           <button

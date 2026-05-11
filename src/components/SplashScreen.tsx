@@ -5,14 +5,13 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [phase, setPhase] = useState<"logo" | "exit">("logo");
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("exit"), 1800);
-    const t2 = setTimeout(onComplete, 2400);
+    const t1 = setTimeout(() => setPhase("exit"), 650);
+    const t2 = setTimeout(onComplete, 950);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onComplete]);
 
   return (
     <AnimatePresence>
-      {phase !== "exit" ? null : null}
       <motion.div
         key="splash"
         initial={{ opacity: 1 }}
@@ -43,7 +42,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
             transition={{ delay: 0.5, duration: 0.6 }}
             className="text-xs font-display tracking-[0.4em] text-primary uppercase mt-4"
           >
-            Initializing Signal...
+            Loading CMS-ready signal...
           </motion.p>
         </motion.div>
 

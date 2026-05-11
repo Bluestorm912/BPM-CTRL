@@ -20,30 +20,48 @@ const AdminLogin = () => {
     return "Network/auth configuration issue: verify backend URL + key pair, and ensure your production domain is in Auth Site URL and Redirect URLs.";
   };
 
+  const withTimeout = async <T,>(promise: Promise<T>, label: string): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(`${label} timed out. Check your connection and try again.`)), 15000);
+    });
+
+    try {
+      return await Promise.race([promise, timeout]);
+    } finally {
+      clearTimeout(timeoutId!);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    if (mode === "signup") {
-      const { error } = await signUp(email, password);
-      if (error) {
-        toast({ title: "Signup failed", description: getNetworkHint(error.message), variant: "destructive" });
+    try {
+      if (mode === "signup") {
+        const { error } = await withTimeout(signUp(email.trim(), password), "Signup");
+        if (error) {
+          toast({ title: "Signup failed", description: getNetworkHint(error.message), variant: "destructive" });
+        } else {
+          toast({
+            title: "Account created",
+            description: "Check your email to verify your account, then log in.",
+          });
+          setMode("login");
+        }
       } else {
-        toast({
-          title: "Account created",
-          description: "Check your email to verify your account, then log in.",
-        });
-        setMode("login");
+        const { error } = await withTimeout(signIn(email.trim(), password), "Login");
+        if (error) {
+          toast({ title: "Login failed", description: getNetworkHint(error.message), variant: "destructive" });
+        } else {
+          navigate("/admin");
+        }
       }
-    } else {
-      const { error } = await signIn(email, password);
-      if (error) {
-        toast({ title: "Login failed", description: getNetworkHint(error.message), variant: "destructive" });
-      } else {
-        navigate("/admin");
-      }
+    } catch (err: any) {
+      toast({ title: mode === "signup" ? "Signup failed" : "Login failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -54,10 +72,10 @@ const AdminLogin = () => {
           <div className="text-center mb-8">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse-glow mx-auto mb-4" />
             <h1 className="font-display text-2xl font-black gradient-text-orange">
-              {mode === "login" ? "ADMIN ACCESS" : "CREATE ACCOUNT"}
+              {mode === "login" ? "CMS SIGN IN" : "CREATE CMS USER"}
             </h1>
             <p className="text-muted-foreground text-xs font-display tracking-wider mt-2">
-              {mode === "login" ? "AUTHORIZED PERSONNEL ONLY" : "REGISTER NEW ADMIN AGENT"}
+              {mode === "login" ? "BPM CTRL publishing access" : "New accounts require admin approval"}
             </p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,7 +88,7 @@ const AdminLogin = () => {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 bg-muted border-border" required minLength={6} />
             </div>
             <Button variant="neon" className="w-full" type="submit" disabled={loading}>
-              {loading ? "Processing..." : mode === "login" ? "Enter Control Room" : "Create Account"}
+              {loading ? "Signing in..." : mode === "login" ? "Open CMS" : "Create Account"}
             </Button>
           </form>
           <button
@@ -80,7 +98,7 @@ const AdminLogin = () => {
             {mode === "login" ? "Need an account? Sign up" : "Already have an account? Log in"}
           </button>
           <a href="/" className="block text-center mt-3 text-xs text-muted-foreground hover:text-primary transition-colors font-display tracking-wider">
-            ← Back to Site
+            Back to Site
           </a>
         </div>
       </div>

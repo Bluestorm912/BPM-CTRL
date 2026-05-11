@@ -9,7 +9,7 @@ const defaultItems = [
   { type: "DJ Set", title: "AFRO FREQUENCY — Live Set", description: "Full DJ set from the last underground transmission.", icon: "Play", tag: "VIDEO" },
   { type: "Crowd Moment", title: "THE FLOOR SPEAKS", description: "Raw crowd energy captured in motion.", icon: "Users", tag: "MOMENT" },
   { type: "Dance Clip", title: "BODY SIGNAL 003", description: "Movement is the message. Watch the language.", icon: "Radio", tag: "DANCE" },
-  { type: "Interview", title: "SIGNAL CARRIER — DJ ÌFÉ", description: "In conversation with the sound architect.", icon: "Mic", tag: "INTERVIEW" },
+  { type: "Interview", title: "SIGNAL CARRIER - DJ IFE", description: "In conversation with the sound architect.", icon: "Mic", tag: "INTERVIEW" },
 ];
 
 const isEmbeddable = (url: string) => {
