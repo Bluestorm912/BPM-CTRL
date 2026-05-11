@@ -3,7 +3,7 @@ import { soundCloudTransmissions } from "@/data/soundcloud";
 import SpotifyPlaylistEmbed from "@/components/SpotifyPlaylistEmbed";
 import { getContentValue, useSectionContent } from "@/hooks/useSiteContent";
 
-const MusicGallery = ({ embedFeatured = false }: { embedFeatured?: boolean }) => {
+const MusicGallery = ({ embedFeatured = true }: { embedFeatured?: boolean }) => {
   const { data: radioContent } = useSectionContent("radio");
   const spotifyPlaylistUrl = getContentValue(radioContent, "radio_spotify_playlist_url", "");
 
@@ -21,7 +21,7 @@ const MusicGallery = ({ embedFeatured = false }: { embedFeatured?: boolean }) =>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {soundCloudTransmissions.map((item) => (
-            <SoundCloudCard key={item.id} item={item} embed={embedFeatured && item.featured} />
+            <SoundCloudCard key={item.id} item={item} embed={embedFeatured} />
           ))}
         </div>
       </section>

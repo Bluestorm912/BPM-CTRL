@@ -2,7 +2,7 @@ import { Play } from "lucide-react";
 import type { SoundCloudTransmission } from "@/data/soundcloud";
 import { getSoundCloudEmbedUrl } from "@/data/soundcloud";
 
-const SoundCloudCard = ({ item, embed = false }: { item: SoundCloudTransmission; embed?: boolean }) => (
+const SoundCloudCard = ({ item, embed = true }: { item: SoundCloudTransmission; embed?: boolean }) => (
   <article className="group glow-border-orange rounded-xl bg-card overflow-hidden transition-transform duration-300 hover:-translate-y-1">
     <div className="aspect-[4/3] overflow-hidden bg-muted relative">
       <img src={item.coverImage} alt={`${item.title} cover`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
@@ -19,18 +19,14 @@ const SoundCloudCard = ({ item, embed = false }: { item: SoundCloudTransmission;
       <p className="font-display text-[10px] tracking-[0.22em] text-primary uppercase">{item.artist}</p>
       <h3 className="mt-2 font-display text-xl font-black text-foreground">{item.title}</h3>
       <p className="mt-3 text-sm text-muted-foreground font-body">{item.description}</p>
-      {embed ? (
+      {embed && (
         <iframe
-          title={`${item.title} on SoundCloud`}
+          title={`${item.title} player`}
           className="mt-5 h-[166px] w-full rounded-lg border border-border"
           src={getSoundCloudEmbedUrl(item.soundcloudUrl)}
           loading="lazy"
           allow="autoplay"
         />
-      ) : (
-        <a href={item.soundcloudUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex font-display text-xs tracking-wider text-primary uppercase hover:text-primary/80">
-          Open SoundCloud
-        </a>
       )}
     </div>
   </article>
