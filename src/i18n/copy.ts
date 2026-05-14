@@ -15,7 +15,7 @@ export const dictionaries = {
       join: "Join",
       archive: "Archive",
       mission: "Mission",
-      play: "Play",
+      play: "Radio",
       install: "Install",
     },
     common: {
@@ -97,7 +97,7 @@ export const dictionaries = {
       eyebrow: "First Visit",
       title: "Start inside the signal.",
       body: "Four quick paths. No account needed to begin.",
-      playTitle: "Play",
+      playTitle: "Radio",
       playText: "Start with the live player or archive.",
       installTitle: "Install",
       installText: "Add BPM CTRL to your home screen.",
@@ -105,7 +105,7 @@ export const dictionaries = {
       dropsText: "Browse releases and member access.",
       membersTitle: "Members",
       membersText: "Support the signal and stay close.",
-      playNow: "Play Now",
+      playNow: "Open Radio",
       gotIt: "Got it",
     },
     supportCta: {
@@ -196,7 +196,7 @@ export const dictionaries = {
       join: "Join",
       archive: "Archive",
       mission: "Mission",
-      play: "Play",
+      play: "Radio",
       install: "Install",
     },
     common: {
