@@ -43,7 +43,14 @@ npx supabase link --project-ref gmlggvtdiqwjzaylvpky
 npx supabase db push
 ```
 
-After migrations are applied, create your first admin by adding a row to `public.team_roles` with your Supabase user ID and the `admin` role.
+After migrations are applied, create your first admin by adding a row to `public.user_roles` with your Supabase user ID and the `admin` role. The migrations also seed `bpmctrl101@gmail.com` as admin when that Supabase Auth user exists.
+
+If the CMS opens but editorial, DJ sets, community applications, or team roles do not work, the latest migrations are not applied yet. Push the migrations:
+
+```sh
+npx supabase link --project-ref gmlggvtdiqwjzaylvpky
+npx supabase db push
+```
 
 ## Key Routes
 

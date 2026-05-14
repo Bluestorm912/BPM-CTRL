@@ -22,6 +22,8 @@ import ShopProductsManager from "@/components/admin/ShopProductsManager";
 import DjSubmissionsManager from "@/components/admin/DjSubmissionsManager";
 import CommunityApplicationsManager from "@/components/admin/CommunityApplicationsManager";
 import { useLogActivity } from "@/hooks/useActivityLog";
+import { useCmsHealth } from "@/hooks/useCmsHealth";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 const SECTIONS = ["hero", "event", "broadcast", "style", "archive", "articles", "community", "gamification", "general"];
 
@@ -40,6 +42,8 @@ const FILE_ACCEPTS: Record<string, string> = {
   icon: "image/*",
   illustration: "image/*",
 };
+
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong.");
 
 const CMSSetupNotice = ({ message }: { message?: string }) => (
   <div className="glow-border-orange rounded-2xl bg-card p-6 md:p-8 relative overflow-hidden">
@@ -69,6 +73,32 @@ const CMSSetupNotice = ({ message }: { message?: string }) => (
   </div>
 );
 
+const CMSHealthNotice = ({ missing }: { missing: Array<{ name: string; message?: string }> }) => {
+  if (!missing.length) return null;
+
+  return (
+    <div className="mb-8 rounded-2xl border border-primary/25 bg-primary/10 p-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-black/30">
+          <AlertTriangle className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <p className="font-display text-xs uppercase tracking-[0.24em] text-primary">Backend setup incomplete</p>
+          <h2 className="mt-1 font-display text-xl font-black text-foreground">Apply the latest Supabase migrations</h2>
+          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+            The CMS shell is live, but the database is missing parts of the editorial/community backend:
+            <span className="text-foreground"> {missing.map((item) => item.name).join(", ")}.</span>
+          </p>
+          <div className="mt-4 rounded-xl border border-border bg-black/35 p-3 font-mono text-xs text-muted-foreground">
+            npx supabase link --project-ref gmlggvtdiqwjzaylvpky<br />
+            npx supabase db push
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const assetPreview = (asset: SiteAsset) => {
   if (asset.asset_type === "audio") {
     return (
@@ -92,6 +122,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: assets, isLoading: assetsLoading, error: assetsError } = useAllSiteAssets();
+  const { data: cmsHealth } = useCmsHealth();
   const createAsset = useCreateAsset();
   const updateAsset = useUpdateAsset();
   const deleteAsset = useDeleteAsset();
@@ -149,7 +180,7 @@ const Admin = () => {
         if (externalUrl && !file) {
           updates = { ...updates, storage_path: externalUrl, public_url: externalUrl };
         }
-        await updateAsset.mutateAsync(updates as any);
+        await updateAsset.mutateAsync(updates as TablesUpdate<"site_assets"> & { id: string });
         logActivity.mutate({
           action: "update",
           entityType: "asset",
@@ -183,8 +214,8 @@ const Admin = () => {
         toast({ title: "Asset created" });
       }
       resetForm();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Error", description: getErrorMessage(err), variant: "destructive" });
     }
     setUploading(false);
   };
@@ -243,7 +274,7 @@ const Admin = () => {
       sort_order: asset.sort_order + 1,
       is_active: false,
       metadata: asset.metadata,
-    } as any);
+    } as TablesInsert<"site_assets">);
 
     logActivity.mutate({
       action: "clone",
@@ -323,6 +354,8 @@ const Admin = () => {
             Role: {roles.join(", ") || (isAdmin ? "admin" : "staff")}
           </p>
         </div>
+
+        <CMSHealthNotice missing={cmsHealth?.missing || []} />
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-muted mb-8 flex-wrap h-auto p-1">
