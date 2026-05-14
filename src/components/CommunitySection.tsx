@@ -1,9 +1,5 @@
 import { motion } from "framer-motion";
-import { Radio } from "lucide-react";
-import iconSpeaker from "@/assets/icon-speaker.png";
-import iconDancer from "@/assets/icon-dancer.png";
-import iconFashion from "@/assets/icon-fashion.png";
-import iconCommunity from "@/assets/icon-community.png";
+import { Disc3, Newspaper, Radio, Users } from "lucide-react";
 import { useSectionContent, getContentValue } from "@/hooks/useSiteContent";
 
 const getFreshContentValue = (content: Parameters<typeof getContentValue>[0], key: string, fallback: string, stale: string[] = []) => {
@@ -13,6 +9,12 @@ const getFreshContentValue = (content: Parameters<typeof getContentValue>[0], ke
 
 const CommunitySection = () => {
   const { data: content } = useSectionContent("community");
+  const pathways = [
+    { href: "/radio", label: "Radio", detail: "Listen live", icon: Radio },
+    { href: "/submit-set", label: "DJ Sets", detail: "Send a mix", icon: Disc3 },
+    { href: "/#articles", label: "Stories", detail: "Read culture", icon: Newspaper },
+    { href: "/careers", label: "Community", detail: "Join the build", icon: Users },
+  ];
 
   const title1 = getFreshContentValue(content, "community_title_1", "A platform for the culture.", ["We don't just throw raves.", "Designed for the room."]);
   const title2 = getFreshContentValue(content, "community_title_2", "Built by the community.", ["We build culture.", "Built for the culture."]);
@@ -67,17 +69,24 @@ const CommunitySection = () => {
             </div>
 
             <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { img: iconSpeaker, text: "Radio" },
-                { img: iconDancer, text: "DJ Sets" },
-                { img: iconFashion, text: "Stories" },
-                { img: iconCommunity, text: "Community" },
-              ].map((item) => (
-                <div key={item.text} className="glass-panel text-center py-4 px-2 rounded-lg">
-                  <img src={item.img} alt={item.text} className="w-10 h-10 mx-auto mb-2 object-contain" />
-                  <span className="text-xs font-display tracking-wider text-muted-foreground uppercase">{item.text}</span>
-                </div>
-              ))}
+              {pathways.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="group liquid-button rounded-2xl px-3 py-4 text-center transition-transform hover:-translate-y-1"
+                    aria-label={`${item.label}: ${item.detail}`}
+                  >
+                    <span className="relative mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-black/45 shadow-[inset_0_1px_0_hsl(var(--primary)/0.28),0_0_26px_hsl(var(--primary)/0.14)]">
+                      <span className="absolute inset-1 rounded-full border border-primary/10" />
+                      <Icon className="h-5 w-5 text-primary transition-transform group-hover:scale-110" />
+                    </span>
+                    <span className="block font-display text-xs uppercase tracking-[0.14em] text-foreground">{item.label}</span>
+                    <span className="mt-1 block text-[11px] text-muted-foreground">{item.detail}</span>
+                  </a>
+                );
+              })}
             </div>
           </div>
         </motion.div>

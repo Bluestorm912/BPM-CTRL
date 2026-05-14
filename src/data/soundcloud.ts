@@ -17,7 +17,7 @@ export interface SoundCloudTransmission {
 export const soundCloudTransmissions: SoundCloudTransmission[] = [
   {
     id: "controlled-bpm-set",
-    title: "Techno Flow: Controlled BPM Set",
+    title: "Techno Flow: BPM CTRL Set",
     artist: "ZenOne",
     soundcloudUrl: "https://soundcloud.com/zenone_music/zenone-techno-flow-controlled-bpm-set-123-127-bpm-oct-2024",
     coverImage: heroBg,

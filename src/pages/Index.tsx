@@ -14,6 +14,7 @@ import { useSiteLinks } from "@/hooks/useSiteLinks";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import EventSection from "@/components/EventSection";
 import CommunitySection from "@/components/CommunitySection";
+import ArticlesSection from "@/components/ArticlesSection";
 import FirstTimeGuide from "@/components/FirstTimeGuide";
 import InstallGuide from "@/components/InstallGuide";
 import LiquidActionBar from "@/components/LiquidActionBar";
@@ -28,10 +29,10 @@ const Index = () => {
     t("meta.homeDescription")
   );
   const tiles = [
-    [t("home.tiles.radio"), t("home.tiles.radioText")],
-    [t("home.tiles.playlists"), t("home.tiles.playlistsText")],
-    [t("home.tiles.members"), t("home.tiles.membersText")],
-    [t("home.tiles.shop"), t("home.tiles.shopText")],
+    [t("home.tiles.radio"), t("home.tiles.radioText"), "/radio"],
+    [t("home.tiles.playlists"), t("home.tiles.playlistsText"), "#music-rooms"],
+    [t("home.tiles.members"), t("home.tiles.membersText"), "/careers"],
+    [t("home.tiles.shop"), t("home.tiles.shopText"), "/shop"],
   ];
 
   return (
@@ -64,7 +65,7 @@ const Index = () => {
         <section id="transmissions" className="px-4 md:px-6 py-14 md:py-20">
           <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
             <div className="glass-panel rounded-2xl overflow-hidden relative min-h-[420px]">
-              <img src={heroBg} alt="BPM Control radio atmosphere" className="absolute inset-0 h-full w-full object-cover opacity-35" loading="lazy" />
+              <img src={heroBg} alt="BPM CTRL radio atmosphere" className="absolute inset-0 h-full w-full object-cover opacity-35" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
               <div className="relative z-10 p-6 md:p-10 h-full flex flex-col justify-end">
                 <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">{t("home.latest")}</p>
@@ -79,17 +80,18 @@ const Index = () => {
               </div>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
-              {tiles.map(([title, text]) => (
-                <div key={title} className="glass-panel rounded-xl p-5">
+              {tiles.map(([title, text, href]) => (
+                <a key={title} href={href} className="glass-panel rounded-xl p-5 transition-colors hover:border-primary/50">
                   <p className="font-display text-sm text-foreground">{title}</p>
                   <p className="mt-2 text-xs text-muted-foreground">{text}</p>
-                </div>
+                </a>
               ))}
             </div>
           </div>
         </section>
 
         <MusicGallery />
+        <ArticlesSection />
         <EventSection />
         <CommunitySection />
         <InstallGuide />

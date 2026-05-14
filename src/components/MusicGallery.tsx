@@ -11,7 +11,7 @@ const MusicGallery = ({ embedFeatured = true }: { embedFeatured?: boolean }) => 
 
   return (
     <>
-      <section className="px-4 md:px-6 py-14 md:py-20">
+      <section id="music-rooms" className="px-4 md:px-6 py-14 md:py-20">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="font-display text-xs tracking-[0.3em] text-primary uppercase">{t("music.eyebrow")}</p>

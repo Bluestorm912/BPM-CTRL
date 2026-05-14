@@ -43,7 +43,7 @@ export const dictionaries = {
     },
     hero: {
       badge: "BPM CTRL is live",
-      title: "BPM CONTROL",
+      title: "BPM CTRL",
       body: "A community-led media and radio platform for music, stories, DJ sets, drops, and the people moving culture forward.",
       join: "Join Members",
       stats: {

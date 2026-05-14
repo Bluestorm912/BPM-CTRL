@@ -16,7 +16,7 @@ const MOCK_USERS = [
 
 const getRankTitle = (xp: number) => {
   if (xp >= 1000) return "Bass Architect";
-  if (xp >= 600) return "Rhythm Controller";
+  if (xp >= 600) return "Rhythm CTRL";
   if (xp >= 300) return "Pulse Rider";
   if (xp >= 100) return "Frequency Walker";
   return "Signal Receiver";

@@ -86,12 +86,16 @@ const EventSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="neon" size="lg">
-                {ctaPrimary}
-              </Button>
-              <Button variant="portal" size="lg">
-                {ctaSecondary}
-              </Button>
+              <a href="/careers#support">
+                <Button variant="neon" size="lg">
+                  {ctaPrimary}
+                </Button>
+              </a>
+              <a href="/careers">
+                <Button variant="portal" size="lg">
+                  {ctaSecondary}
+                </Button>
+              </a>
             </div>
           </div>
         </motion.div>
