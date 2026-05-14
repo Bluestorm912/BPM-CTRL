@@ -1,4 +1,4 @@
-const CACHE_VERSION = "bpm-ctrl-v1";
+const CACHE_VERSION = "bpm-ctrl-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 self.addEventListener("install", (event) => {
@@ -25,26 +25,21 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(STATIC_CACHE).then((cache) => cache.put("/", copy));
-          return response;
-        })
+        .then((response) => response)
         .catch(() => caches.match("/") || caches.match("/index.html"))
     );
     return;
   }
 
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/") || url.pathname === "/manifest.webmanifest") {
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/")) {
     event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
-        return fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
           const copy = response.clone();
           caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
           return response;
-        });
-      })
+        })
+        .catch(() => caches.match(request))
     );
   }
 });
