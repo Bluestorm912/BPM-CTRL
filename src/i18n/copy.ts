@@ -138,7 +138,7 @@ export const dictionaries = {
       required: "Shop account required",
       requiredText: "Sign in or register to interact with {product}.",
       selected: "Product selected",
-      nextStep: "Cart checkout is the next build step.",
+      nextStep: "Sign in or join the shop list so we can notify you when {product} checkout opens.",
       productBody: "Built for broadcasts, late nights, and the people who keep the signal moving.",
       login: "Login",
       view: "View",

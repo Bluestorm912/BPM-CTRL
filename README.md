@@ -1,73 +1,59 @@
-# Welcome to your Lovable project
+# BPM CTRL
 
-## Project info
+BPM CTRL is a community-led radio, music, editorial, DJ set, shop, and culture platform built with React, Vite, Supabase, and Netlify.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app expects Supabase credentials in `.env`. Use `.env.example` as the template.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Build
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Netlify builds from `dist` using the settings in `netlify.toml`.
 
-## What technologies are used for this project?
+## Deploy
 
-This project is built with:
+The connected Netlify site is:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Site ID: `ecb00cac-fc19-496f-9783-514396368b73`
+- Production URL: `https://bpmctrl.com`
 
-## How can I deploy this project?
+Manual production deploy:
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```sh
+npx netlify-cli deploy --prod --dir=dist --site ecb00cac-fc19-496f-9783-514396368b73
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Backend Setup
 
-Yes, you can!
+Supabase migrations live in `supabase/migrations`. They create the shop, editorial, app copy, role, DJ submission, and community application tables.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Apply migrations before testing admin workflows:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```sh
+npx supabase link --project-ref gmlggvtdiqwjzaylvpky
+npx supabase db push
+```
+
+After migrations are applied, create your first admin by adding a row to `public.team_roles` with your Supabase user ID and the `admin` role.
+
+## Key Routes
+
+- `/` - Home, radio entry, stories, shop and community paths
+- `/radio` - Live radio and music rooms
+- `/shop` - Drops, shop account, saved addresses, and order history
+- `/submit-set` - DJ set submissions for editorial review
+- `/careers` - Join, volunteer, intern, fund, mission, and members
+- `/admin` - Role-based content, shop, submission, copy, and analytics tools
+
+## Notes
+
+Public DJ uploads are limited in the frontend and stored in the `community-submissions` bucket. Admins still review every submitted set before it appears publicly.

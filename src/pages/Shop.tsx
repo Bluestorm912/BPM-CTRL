@@ -24,6 +24,8 @@ const PRODUCTS = [
 
 const CATEGORIES = ["All", "Apparel", "Accessories", "Prints"];
 
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong.");
+
 const Shop = () => {
   const { user, signIn, signUp, signOut } = useAuth();
   const { toast } = useToast();
@@ -98,8 +100,8 @@ const Shop = () => {
         toast({ title: t("shop.accountCreated"), description: t("shop.confirmEmail") });
         setAuthMode("login");
       }
-    } catch (err: any) {
-      toast({ title: t("shop.actionFailed"), description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: t("shop.actionFailed"), description: getErrorMessage(err), variant: "destructive" });
     }
   };
 
@@ -110,9 +112,13 @@ const Shop = () => {
       await saveAddress.mutateAsync(addressForm);
       toast({ title: t("shop.addressSaved"), description: t("shop.addressReady") });
       setAddressForm((current) => ({ ...current, addressLine1: "", addressLine2: "", city: "", state: "" }));
-    } catch (err: any) {
-      toast({ title: t("shop.addressFailed"), description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: t("shop.addressFailed"), description: getErrorMessage(err), variant: "destructive" });
     }
+  };
+
+  const moveToShopAccount = () => {
+    document.getElementById("shop-account")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const requireLogin = (productName: string) => {
@@ -121,7 +127,12 @@ const Shop = () => {
       description: t("shop.requiredText", { product: productName }),
       variant: "destructive",
     });
-    document.getElementById("shop-account")?.scrollIntoView({ behavior: "smooth" });
+    moveToShopAccount();
+  };
+
+  const handleProductInterest = (productName: string) => {
+    toast({ title: t("shop.selected"), description: t("shop.nextStep", { product: productName }) });
+    moveToShopAccount();
   };
 
   return (
@@ -208,7 +219,7 @@ const Shop = () => {
                     <Button
                       variant="neon"
                       size="sm"
-                      onClick={() => (product.gated && !user ? requireLogin(product.name) : toast({ title: t("shop.selected"), description: t("shop.nextStep") }))}
+                      onClick={() => (product.gated && !user ? requireLogin(product.name) : handleProductInterest(product.name))}
                     >
                       {product.gated && !user ? t("shop.login") : t("shop.view")}
                     </Button>

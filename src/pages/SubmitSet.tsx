@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadCommunityFile, usePublishedDjSets, useSubmitDjSet } from "@/hooks/useCommunitySubmissions";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : "Something went wrong.");
+
 const SubmitSet = () => {
   const { toast } = useToast();
   const submitDjSet = useSubmitDjSet();
@@ -28,12 +30,29 @@ const SubmitSet = () => {
 
   usePageMeta("Submit a DJ Set - BPM CTRL", "DJs can submit mixes and sets for BPM CTRL editorial review.");
 
+  const handleAudioFile = (file?: File) => {
+    if (!file) {
+      setAudioFile(null);
+      return;
+    }
+    if (!file.type.startsWith("audio/")) {
+      toast({ title: "Audio only", description: "Upload an audio file or paste a set link instead.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 250 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Keep uploads under 250MB, or paste a Drive, Dropbox, SoundCloud, or Mixcloud link.", variant: "destructive" });
+      return;
+    }
+    setAudioFile(file);
+  };
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
       let audio_url = "";
       if (audioFile) {
-        audio_url = await uploadCommunityFile(audioFile, `dj-submissions/${Date.now()}-${audioFile.name}`);
+        const safeName = audioFile.name.replace(/[^a-z0-9_.-]/gi, "_").toLowerCase();
+        audio_url = await uploadCommunityFile(audioFile, `dj-submissions/${Date.now()}-${safeName}`);
       }
       if (!audio_url && !form.set_url.trim()) {
         toast({ title: "Add a set", description: "Upload an audio file or paste a link.", variant: "destructive" });
@@ -43,8 +62,8 @@ const SubmitSet = () => {
       toast({ title: "Set submitted", description: "Our editors will listen and publish it if it fits the signal." });
       setForm({ dj_name: "", email: "", city: "", country: "", title: "", genre: "", set_url: "", cover_image_url: "", notes: "" });
       setAudioFile(null);
-    } catch (err: any) {
-      toast({ title: "Submission failed", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Submission failed", description: getErrorMessage(err), variant: "destructive" });
     }
   };
 
@@ -112,7 +131,7 @@ const SubmitSet = () => {
               <label className="flex items-center gap-3 rounded-2xl border border-border bg-muted/50 px-4 py-4 cursor-pointer">
                 <Upload className="h-5 w-5 text-primary" />
                 <span className="text-sm text-foreground">{audioFile ? audioFile.name : "Or upload an audio file"}</span>
-                <input type="file" accept="audio/*" className="hidden" onChange={(event) => setAudioFile(event.target.files?.[0] || null)} />
+                <input type="file" accept="audio/*" className="hidden" onChange={(event) => handleAudioFile(event.target.files?.[0])} />
               </label>
               <div>
                 <Label className="font-display text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
