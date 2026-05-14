@@ -52,6 +52,15 @@ npx supabase link --project-ref gmlggvtdiqwjzaylvpky
 npx supabase db push
 ```
 
+## Auth Email Setup
+
+For CMS signup and password reset emails, Supabase Auth must allow both the live site and local dev redirects:
+
+- Site URL: `https://bpmctrl.com`
+- Redirect URLs: `https://bpmctrl.com/admin/login`, `https://bpmctrl.com/**`, `http://localhost:3000/admin/login`, `http://localhost:3000/**`
+
+If emails stop arriving, check Supabase Auth email logs and SMTP settings. The app sends signup and reset links back to the current origin, so localhost testing uses `http://localhost:3000/admin/login` and production uses `https://bpmctrl.com/admin/login`.
+
 ## Key Routes
 
 - `/` - Home, radio entry, stories, shop and community paths

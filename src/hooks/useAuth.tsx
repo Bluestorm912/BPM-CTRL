@@ -104,7 +104,23 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string) => {
-    return supabase.auth.signUp({ email, password });
+    return supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/admin/login`,
+      },
+    });
+  };
+
+  const resetPassword = async (email: string) => {
+    return supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/admin/login`,
+    });
+  };
+
+  const updatePassword = async (password: string) => {
+    return supabase.auth.updateUser({ password });
   };
 
   const signOut = async () => {
@@ -114,5 +130,5 @@ export const useAuth = () => {
   const hasRole = (...allowed: AppRole[]) => roles.some((role) => allowed.includes(role));
   const canAccessCms = hasRole("admin", "editor", "writer", "creator", "media_manager", "shop_manager", "analyst", "moderator");
 
-  return { user, session, loading, isAdmin, roles, hasRole, canAccessCms, signIn, signUp, signOut };
+  return { user, session, loading, isAdmin, roles, hasRole, canAccessCms, signIn, signUp, resetPassword, updatePassword, signOut };
 };
