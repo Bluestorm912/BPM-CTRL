@@ -1,4 +1,4 @@
-const CACHE_VERSION = "bpm-ctrl-v2";
+const CACHE_VERSION = "bpm-ctrl-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 self.addEventListener("install", (event) => {
