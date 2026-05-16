@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import type { Tables } from "@/integrations/supabase/types";
 
 const ADMIN_EMAILS = new Set(["michaelseth13@gmail.com", "bpmctrl101@gmail.com"]);
 export type AppRole =
@@ -27,7 +28,8 @@ const hasAdminMetadata = (user: User | null) => {
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [rolesLoading, setRolesLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [roles, setRoles] = useState<AppRole[]>([]);
 
@@ -38,7 +40,7 @@ export const useAuth = () => {
         setUser(session?.user ?? null);
         setIsAdmin(hasAdminMetadata(session?.user ?? null));
         setRoles(hasAdminMetadata(session?.user ?? null) ? ["admin"] : []);
-        setLoading(!!session?.user);
+        setSessionReady(true);
       }
     );
 
@@ -47,7 +49,9 @@ export const useAuth = () => {
       setUser(session?.user ?? null);
       setIsAdmin(hasAdminMetadata(session?.user ?? null));
       setRoles(hasAdminMetadata(session?.user ?? null) ? ["admin"] : []);
-      setLoading(!!session?.user);
+      setSessionReady(true);
+    }).catch(() => {
+      setSessionReady(true);
     });
 
     return () => subscription.unsubscribe();
@@ -57,37 +61,42 @@ export const useAuth = () => {
     let cancelled = false;
 
     const checkAdmin = async () => {
+      if (!sessionReady) return;
+
       if (!user) {
         setIsAdmin(false);
         setRoles([]);
-        setLoading(false);
+        setRolesLoading(false);
         return;
       }
 
+      setRolesLoading(true);
       const fallbackAdmin = hasAdminMetadata(user);
       const fallbackRoles: AppRole[] = fallbackAdmin ? ["admin"] : [];
       setIsAdmin(fallbackAdmin);
       setRoles(fallbackRoles);
 
       try {
-        const { data: roleRows } = await (supabase as any)
+        const { data: roleRows } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id);
 
-        const dbRoles = ((roleRows || []).map((row: any) => row.role) as AppRole[]).filter(Boolean);
+        const dbRoles = ((roleRows || []) as Pick<Tables<"user_roles">, "role">[])
+          .map((row) => row.role as AppRole)
+          .filter(Boolean);
         const nextRoles = Array.from(new Set([...fallbackRoles, ...dbRoles]));
 
         if (!cancelled) {
           setRoles(nextRoles);
           setIsAdmin(nextRoles.includes("admin"));
-          setLoading(false);
+          setRolesLoading(false);
         }
       } catch {
         if (!cancelled) {
           setRoles(fallbackRoles);
           setIsAdmin(fallbackAdmin);
-          setLoading(false);
+          setRolesLoading(false);
         }
       }
     };
@@ -97,7 +106,7 @@ export const useAuth = () => {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [sessionReady, user]);
 
   const signIn = async (email: string, password: string) => {
     return supabase.auth.signInWithPassword({ email, password });
@@ -129,6 +138,7 @@ export const useAuth = () => {
 
   const hasRole = (...allowed: AppRole[]) => roles.some((role) => allowed.includes(role));
   const canAccessCms = hasRole("admin", "editor", "writer", "creator", "media_manager", "shop_manager", "analyst", "moderator");
+  const loading = !sessionReady || rolesLoading;
 
   return { user, session, loading, isAdmin, roles, hasRole, canAccessCms, signIn, signUp, resetPassword, updatePassword, signOut };
 };
