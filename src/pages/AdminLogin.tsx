@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +10,9 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const [mode, setMode] = useState<"login" | "signup" | "reset" | "update">("login");
   const { signIn, signUp, resetPassword, updatePassword } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,6 +52,7 @@ const AdminLogin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setStatusText("");
 
     try {
       if (mode === "update") {
@@ -87,15 +87,21 @@ const AdminLogin = () => {
           setMode("login");
         }
       } else {
-        const { error } = await withTimeout(signIn(email.trim(), password), "Login");
+        const { error } = await withTimeout(signIn(email.trim().toLowerCase(), password), "Login");
         if (error) {
+          setStatusText(getLoginHint(error.message));
           toast({ title: "Login failed", description: getLoginHint(error.message), variant: "destructive" });
         } else {
-          navigate("/admin");
+          setStatusText("Login successful. Opening CMS...");
+          toast({ title: "Login successful", description: "Opening the CMS dashboard." });
+          window.setTimeout(() => {
+            window.location.assign("/admin");
+          }, 150);
         }
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Something went wrong.";
+      setStatusText(message);
       toast({ title: mode === "signup" ? "Signup failed" : mode === "reset" ? "Reset failed" : mode === "update" ? "Update failed" : "Login failed", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -120,19 +126,24 @@ const AdminLogin = () => {
             {mode !== "update" && (
               <div>
                 <Label htmlFor="email" className="font-display text-xs tracking-wider text-muted-foreground uppercase">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 bg-muted border-border" required />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 bg-muted border-border" autoComplete="email" required />
               </div>
             )}
             {mode !== "reset" && (
               <div>
                 <Label htmlFor="password" className="font-display text-xs tracking-wider text-muted-foreground uppercase">{mode === "update" ? "New Password" : "Password"}</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 bg-muted border-border" required minLength={6} />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 bg-muted border-border" autoComplete={mode === "update" ? "new-password" : "current-password"} required minLength={6} />
               </div>
             )}
             <Button variant="neon" className="w-full" type="submit" disabled={loading}>
               {loading ? "Working..." : mode === "login" ? "Open CMS" : mode === "reset" ? "Send Reset Link" : mode === "update" ? "Update Password" : "Create Account"}
             </Button>
           </form>
+          {statusText && (
+            <p className="mt-4 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-center text-xs text-muted-foreground">
+              {statusText}
+            </p>
+          )}
           <div className="mt-4 flex flex-col gap-2 text-center">
             {mode === "login" && (
               <>
